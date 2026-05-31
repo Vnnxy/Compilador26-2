@@ -1,0 +1,7 @@
+{
+    "name": "Compiladores",
+    "build": {
+        "dockerfile": "../Setup/Dockerfile"
+    },
+    "remoteUser": "docker_user"
+}
