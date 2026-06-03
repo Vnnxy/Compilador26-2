@@ -1,79 +1,57 @@
-%skeleton "lalr1.cc"
-%require "3.0"
+    %skeleton "lalr1.cc"
+    %require "3.0"
 
-%defines
-%define api.namespace {yy}
-//%define api.parser.class.name {parser}
-%define api.value.type variant
-%define api.token.constructor
+    %defines
+    %define api.namespace {C0}
+    %define api.parser.class {Parser}
+    %define api.value.type variant
+    %locations           
 
-%code requires{
-    #include <string>
-}
+    %code requires {
+        #include <string>
 
-%code{
-    #include <iostream>
-    #include <stdexcept>
-
-    using namespace std;
-    //extern int yylex(yy::parser::semantic_type * yylval);
-    #define YY_DECL yy::parser::symbol_type yylex();
-    YY_DECL
-}
-
-%token <int> NUMERO
-
-%right PLUS "+"
-%right MUL "*"
-%nonassoc LPAR RPAR
-%token ENDL
-
-%type <int> L E T F
-
-%%
-
-L : 
-    E ENDL
-    {
-        cout<<"Resultado es " << $1 <<endl;
+        namespace C0 {
+            class Scanner; // <-- ADD THIS: Forward declaration for Parser.hpp
+        }
     }
-;
 
-E:  
-    E PLUS T{
-        $$ = $1 + $3;
-    }
-    |
-    T {
-        $$= $1;
-    }
-;
+    %code {
+        #include <iostream>
+        #include "Scanner.hpp"
+        using namespace std;
 
-T:  
-    T MUL T{
-        $$ = $1 * $3;
+        static int yylex(C0::Parser::semantic_type* lval,
+                     C0::Parser::location_type* loc,
+                     C0::Scanner& scanner) {
+        return scanner.yylex(lval, loc);
     }
-    |
-    F {
-        $$= $1;
     }
-;
+    %param { C0::Scanner& scanner }  
 
-F: 
-    LPAR E RPAR{
-        $$ =$2;
-    }
-    |
-    NUMERO{
-        $$ = $1;
-    }
-%%
+    /* ── Keywords ── */
+    %token DEF STRUCT VOID
+    %token INT FLOAT CHAR BOOL
+    %token IF ELSE WHILE FOR BREAK RETURN
+    %token TRUE FALSE
 
-void yy::parser::error(const string& msg){
-    cerr<<"Error sintactico: "<< msg <<endl;
-}
+    /* ── Value-carrying tokens ── */
+    %token <std::string> ID
+    %token <std::string> NUM
+    %token <std::string> DECIMAL
+    %token <std::string> CHARI
+    %token <std::string> STRING
 
-int main(){
-    yy::parser parser;
-    return parser.parse();
-}
+    /* ── Punctuation & operators ── */
+    %token LPAR RPAR LBRAC RBRAC LKEY RKEY PYC COMMA DOT
+    %token MAS MENOS MUL DIV MOD
+    %token EQUAL DISTINCT GTE LTE GT LT
+    %token AND OR ASIG
+    %%
+
+    input: %empty ;
+
+    %%
+
+    void C0::Parser::error(const location_type& loc, const std::string& msg) {
+        std::cerr << "Error sintactico: " << msg << " en " << loc << std::endl;
+    }

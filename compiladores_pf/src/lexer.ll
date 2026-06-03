@@ -1,31 +1,129 @@
-%option noyywrap c++
-
 %{
-    #include "parser.tab.hh"
+#include <string>
+#include <iostream>
+using namespace std;
+#include "Scanner.hpp"
+#undef  YY_DECL
+#define YY_DECL int C0::Scanner::yylex( \
+    C0::Parser::semantic_type* const lval, \
+    C0::Parser::location_type* loc )     
 
-    using namespace yy;
+using token = C0::Parser::token;
+#define YY_NO_UNISTD_H
+#define YY_USER_ACTION loc->step(); loc->columns(yyleng);
 %}
 
-DIGITO [0-9]+
+%option debug
+%option nodefault
+%option yyclass="C0::Scanner"
+%option noyywrap
+%option c++
+
+/* Patrones auxiliares (Comments here are fine unindented because we are before the first %%) */
+DIG      [0-9]
+LETRA    [a-zA-Z_]
+NUM      {DIG}+
+DECIMAL  {DIG}+"."{DIG}+
+ID       {LETRA}({LETRA}|{DIG})*
+CHAR   \'([^\'\\]|\\.)\'
+STRING   \"([\x20-\x21\x23-\xFE])*\"
 
 %%
 
-[ \t\r]+      ;
+    /* Codigo ejecutado al inicio de cada llamada a yylex (INDENTED!) */
+    yylval = lval;
 
-\n            return parser::make_ENDL();
+    /* Comentarios (Must be indented!) */
+"//"[^\n]* { /* comentario de linea, ignorar */ }
+"/*"([^*]|\*+[^*/])*\*+"/"          { /* comentario de bloque, ignorar */ }
 
-"+"           return parser::make_PLUS();
-"*"           return parser::make_MULT();
+    /* Palabras reservadas */
+"def"       { return( token::DEF );    }
+"struct"    { return( token::STRUCT ); }
+"int"       { return( token::INT );    }
+"float"     { return( token::FLOAT );  }
+"char"      { return( token::CHAR );   }
+"bool"      { return( token::BOOL );   }
+"void"      { return( token::VOID );   }
+"if"        { return( token::IF );     }
+"else"      { return( token::ELSE );   }
+"while"     { return( token::WHILE );  }
+"for"       { return( token::FOR );    }
+"break"     { return( token::BREAK );  }
+"return"    { return( token::RETURN ); }
+"true"      { return( token::TRUE );   }
+"false"     { return( token::FALSE );  }
 
-"("           return parser::make_LPAREN();
-")"           return parser::make_RPAREN();
+    /* Literales */
+{DECIMAL}   {
+                yylval->build< std::string >( yytext );
+                return( token::DECIMAL );
+            }
 
-{DIGITO} {
-    return parser::make_NUMERO(std::stoi(yytext));
-}
+{NUM}       {
+                yylval->build< std::string >( yytext );
+                return( token::NUM );
+            }
 
-. {
-    throw std::runtime_error("Caracter invalido");
-}
+{CHAR}     {
+                yylval->build< std::string >( yytext );
+                return( token::CHARI );
+            }
+
+{STRING}    {
+                yylval->build< std::string >( yytext );
+                return( token::STRING );
+            }
+
+    /* Identificadores (despues de palabras reservadas) */
+{ID}        {
+                yylval->build< std::string >( yytext );
+                return( token::ID );
+            }
+
+    /* Delimitadores */
+"("         { return( token::LPAR );    }
+")"         { return( token::RPAR );    }
+"["         { return( token::LBRAC );   }
+"]"         { return( token::RBRAC );   }
+"{"         { return( token::LKEY );    }
+"}"         { return( token::RKEY );    }
+";"         { return( token::PYC );     }
+","         { return( token::COMMA );   }
+"."         { return( token::DOT );     }
+
+    /* Operadores aritmeticos */
+"+"         { return( token::MAS );     }
+"-"         { return( token::MENOS );   }
+"*"         { return( token::MUL );     }
+"/"         { return( token::DIV );     }
+"%"         { return( token::MOD );     }
+
+    /* Operadores relacionales
+       Los de dos caracteres DEBEN ir antes que los de uno */
+"=="        { return( token::EQUAL );    }
+"!="        { return( token::DISTINCT ); }
+">="        { return( token::GTE );      }
+"<="        { return( token::LTE );      }
+">"         { return( token::GT );       }
+"<"         { return( token::LT );       }
+
+    /* Operadores logicos */
+"&&"        { return( token::AND ); }
+"||"        { return( token::OR );  }
+
+    /* Asignacion */
+"="         { return( token::ASIG ); }
+
+    /* Espacios en blanco y saltos de linea */
+\n          { loc->lines(); }
+[ \t\r]     { /* ignorar */ }
+
+    /* Error lexico */
+.           {
+                cerr << "ERROR LEXICO: caracter inesperado '"
+                     << yytext << "' en linea "
+                     << loc->begin.line << endl;
+            }
 
 %%
