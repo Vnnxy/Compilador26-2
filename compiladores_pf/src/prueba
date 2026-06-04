@@ -1,0 +1,14 @@
+int f(int a, float b, int c, char d)
+{
+    return a;
+}
+
+int main()
+{
+    int x;
+
+    x = f(10, 20.5, 3, 'z');
+
+    return x;
+}
+
