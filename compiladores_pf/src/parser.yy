@@ -16,6 +16,9 @@
 
 %parse-param {Lexer* lexer}
 
+%define parse.error verbose
+%define parse.trace
+
 // ============================================================
 // INCLUDES NECESARIOS
 // ============================================================
@@ -133,6 +136,7 @@
 %token CHAR
 
 %token STRUCT
+%token DEF
 
 %token IF
 %token ELSE
@@ -155,6 +159,8 @@
 
 %token MULT
 %token DIV
+%token MOD
+
 
 %token ASSIGN
 
@@ -298,35 +304,36 @@ D :
         dir = 0;
     }
 
-    LBRACE D RBRACE SEMICOLON D
-
+    LBRACE D RBRACE
     {
+        // Mid-rule action — runs BEFORE L
         SymTab* ts = pilaTs.pop();
-
         int tamStruct = dir;
-
         dir = pilaDir.top();
         pilaDir.pop();
 
         string nombreStruct = $2;
 
         if(tablaTipos.getId(nombreStruct) != -1){
-            cerr
-                << "Struct redeclarado: "
-                << nombreStruct
-                << endl;
+            cerr << "Struct redeclarado: " << nombreStruct << endl;
+            currentType = -1;
         }
         else{
-            tablaTipos.addStructType(
+            int tipoStruct = tablaTipos.addStructType(
                 nombreStruct,
                 tamStruct,
                 ts
             );
+            currentType = tipoStruct; 
         }
-
-        if($2) 
-            free($2);
     }
+    L SEMICOLON D
+
+    {
+        // Final action — just free the ID
+        if($2) free($2);
+    }
+
 
     |
 
@@ -343,10 +350,10 @@ D :
 
 FUNC :
 
-    T ID
+    DEF T ID
 
     {
-        string id = $2;
+        string id = $3;
 
         if(pilaTs.bottom()->existe(id)){
 
@@ -366,7 +373,7 @@ FUNC :
             dir = 0;
 
             // Guardar tipo retorno
-            tipoReturn = $1.tipo;
+            tipoReturn = $2.tipo;
         }
     }
 
@@ -375,9 +382,9 @@ FUNC :
     BLOQUE
 
     {
-        string id = $2;
+        string id = $3;
 
-        for(string instr : $7.code){
+        for(string instr : $8.code){
             codigo.push_back(instr);
         }
 
@@ -401,14 +408,14 @@ FUNC :
         pilaTs.bottom()->addSym(
             id,
             -1,
-            $1.tipo,
+            $2.tipo,
             "func",
             listaParams
         );
 
         listaParams.clear();
 
-        free($2);
+        free($3);
     }
 
 ;
@@ -720,6 +727,44 @@ STMT :
         }
 
         free($1);
+    }
+
+    | ID DOT ID ASSIGN E SEMICOLON
+    {
+        string base = $1;
+        string campo = $3;
+
+        if(!pilaTs.lookup(base)){
+            cerr << "Variable no declarada: " << base << endl;
+        }
+        else{
+            int tipoBase = pilaTs.lookupType(base);
+            cerr << "DEBUG: base=" << base 
+         << " tipoBase=" << tipoBase << endl;
+            SymTab* tsStruct = tablaTipos.getTS(tipoBase);
+               cerr << "DEBUG: tsStruct=" << tsStruct << endl;
+            if(tsStruct == nullptr){
+                cerr << "Acceso con '.' sobre tipo no struct" << endl;
+            }
+            else if(!tsStruct->existe(campo)){
+                cerr << "Campo inexistente: " << campo << endl;
+            }
+            else{
+                int tipoCampo = tsStruct->getType(campo);
+                if(!tiposCompatibles(tipoCampo, $5.tipo)){
+                    cerr << "Tipos incompatibles en asignación" << endl;
+                }
+                else{
+                    $$.code = $5.code;
+                    $$.code.push_back(
+                        base + "." + campo + " = " + $5.dir
+                    );
+                }
+            }
+        }
+
+        free($1);
+        free($3);
     }
 
     |
@@ -1814,8 +1859,11 @@ ARGS :
 // ============================================================
 
 void C1::Parser::error(const std::string& msg){
-
     cerr << "Error sintáctico: "
          << msg
+         << " cerca de token: '"
+         << lexer->YYText()  // shows the actual token text
+         << "' en línea "
+         << lexer->lineno()  // shows line number
          << endl;
 }
