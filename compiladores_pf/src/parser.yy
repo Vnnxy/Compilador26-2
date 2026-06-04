@@ -49,6 +49,8 @@
 
     #include "headers/TAC.hpp"
 
+    #include "headers/ErrorSem.hpp"
+
     #include <stack>
 
     using namespace std;
@@ -72,6 +74,8 @@
     vector<int> listaParams;
 
     int tipoReturn = -1;
+
+    bool funcionValida = true;
 
     stack<string> pilaBreak;
 
@@ -229,6 +233,7 @@
 %type <Attr> L
 %type <Attr> F
 
+%type <Attr> LVALUE
 %type <Attr> S
 %type <Attr> STMT
 
@@ -353,6 +358,8 @@ FUNC :
             cerr << "Función redeclarada: "
                  << id
                  << endl;
+            funcionValida=false;
+            errorSem = true;
         }
         else{
 
@@ -381,30 +388,32 @@ FUNC :
             codigo.push_back(instr);
         }
 
-        SymTab* tsFunc = pilaTs.top();
+        if(funcionValida){
+            SymTab* tsFunc = pilaTs.top();
 
-        cout << "\nTABLA FUNCION " << id << endl;
-        tsFunc->print();
+            cout << "\nTABLA FUNCION " << id << endl;
+            tsFunc->print();
 
-        pilaTs.pop();
+            pilaTs.pop();
 
-        dir = pilaDir.top();
-        pilaDir.pop();
+            dir = pilaDir.top();
+            pilaDir.pop();
 
-        //Invertir la lista de parámetros, ya que estos se procesan de derecha a izquierda 
-        reverse(
-            listaParams.begin(),
-            listaParams.end()
-        );
+            //Invertir la lista de parámetros, ya que estos se procesan de derecha a izquierda 
+            reverse(
+                listaParams.begin(),
+                listaParams.end()
+            );
 
-        // Registrar función global
-        pilaTs.bottom()->addSym(
-            id,
-            -1,
-            $1.tipo,
-            "func",
-            listaParams
-        );
+            // Registrar función global
+            pilaTs.bottom()->addSym(
+                id,
+                -1, 
+                $1.tipo,
+                "func",
+                listaParams
+            );
+        }
 
         listaParams.clear();
 
@@ -523,6 +532,7 @@ A :
 
             cerr << "Error: tamaño inválido de arreglo"
                  << endl;
+            errorSem=true;
         }
 
         $$.tipo =
@@ -564,6 +574,7 @@ L :
             cerr << "Variable redeclarada: "
                  << id
                  << endl;
+            errorSem = true;
         }
 
         free($3);
@@ -590,6 +601,37 @@ L :
             cerr << "Variable redeclarada: "
                  << id
                  << endl;
+            errorSem = true;
+        }
+
+        free($1);
+    }
+
+    |
+
+    ID A
+
+    {
+        string id = $1;
+
+        if(!pilaTs.lookup(id)){
+
+            pilaTs.top()->addSym(
+                id,
+                dir,
+                $2.tipo,
+                "var"
+            );
+
+            dir += tablaTipos.getTam($2.tipo);
+        }
+        else{
+
+            cerr << "Variable redeclarada: "
+                 << id
+                 << endl;
+
+            errorSem = true;
         }
 
         free($1);
@@ -661,6 +703,82 @@ BLOQUE :
 
 ;
 
+LVALUE :
+
+    ID
+    {
+        string id = $1;
+
+        if(!pilaTs.lookup(id)){
+
+            cerr
+                << "Variable no declarada: "
+                << id
+                << endl;
+
+            errorSem = true;
+
+            $$.tipo = tablaTipos.getId("int");
+        }
+        else{
+
+            $$.tipo =
+                pilaTs.lookupType(id);
+
+            $$.dir = id;
+        }
+
+        free($1);
+    }
+
+    |
+
+    LVALUE LBRACKET E RBRACKET
+    {
+        if($3.tipo != tablaTipos.getId("int")){
+
+            cerr
+                << "Indice de arreglo no entero"
+                << endl;
+
+            errorSem = true;
+        }
+
+        int tipoBase =
+            tablaTipos.getTipoBase($1.tipo);
+
+        if(tipoBase == -1){
+
+            cerr
+                << "Indexacion sobre variable no arreglo"
+                << endl;
+
+            errorSem = true;
+
+            $$.tipo =
+                tablaTipos.getId("int");
+        }
+        else{
+
+            $$.tipo = tipoBase;
+        }
+
+        $$.code = $1.code;
+
+        $$.code.insert(
+            $$.code.end(),
+            $3.code.begin(),
+            $3.code.end()
+        );
+
+        $$.dir =
+            $1.dir
+            + "["
+            + $3.dir
+            + "]";
+    }
+;
+
 // ============================================================
 // SENTENCIAS
 // ============================================================
@@ -698,6 +816,7 @@ STMT :
             cerr << "Variable no declarada: "
                  << id
                  << endl;
+            errorSem = true;
         }
         else{
 
@@ -708,6 +827,7 @@ STMT :
                 cerr 
                     << "Tipos incompatibles en asignación"
                     << endl;
+                    errorSem=true;
             }
             else{
 
@@ -724,6 +844,38 @@ STMT :
 
     |
 
+    LVALUE ASSIGN E SEMICOLON
+
+    {
+        if(!tiposCompatibles(
+                $1.tipo,
+                $3.tipo))
+        {
+
+            cerr
+                << "Tipos incompatibles en asignacion"
+                << endl;
+
+            errorSem = true;
+        }
+
+        $$.code = $1.code;
+
+        $$.code.insert(
+            $$.code.end(),
+            $3.code.begin(),
+            $3.code.end()
+        );
+
+        $$.code.push_back(
+            $1.dir
+            + " = "
+            + $3.dir
+        );
+    }
+
+    |
+
     IF LPAREN E RPAREN STMT
     %prec LOWER_THAN_ELSE
 
@@ -733,6 +885,7 @@ STMT :
             cerr 
                 << "Condición no booleana en if"
                 << endl;
+            errorSem=true;
         }
 
         string Lfin = nuevaLabel();
@@ -768,6 +921,7 @@ STMT :
             cerr 
                 << "Condición no booleana en if"
                 << endl;
+            errorSem=true;
         }
 
         string Lelse = nuevaLabel();
@@ -816,6 +970,7 @@ STMT :
 
             cerr << "Condición no booleana en while"
                  << endl;
+            errorSem=true;
         }
 
         string Linicio = nuevaLabel();
@@ -976,6 +1131,7 @@ RETURN_STMT :
             cerr 
                 << "Tipo de retorno incorrecto"
                 << endl;
+            errorSem = true;
         }
         $$.tipo = $2.tipo;
         $$.dir = $2.dir;
@@ -1002,7 +1158,7 @@ E :
         !esNumerico($3.tipo)){
             cerr << "Error: suma inválida"
             << endl;
-            $$.tipo = tablaTipos.getId("int");
+            errorSem=true;
     }
     else{
         $$.tipo =
@@ -1038,7 +1194,7 @@ E :
            !esNumerico($3.tipo)){
             cerr << "Error: resta inválida"
             << endl;
-            $$.tipo = tablaTipos.getId("int");
+            errorSem=true;
         }
         else{
             $$.tipo =
@@ -1074,8 +1230,7 @@ E :
            !esNumerico($3.tipo)){
             cerr << "Error: multiplicación inválida"
                  << endl;
-
-            $$.tipo = tablaTipos.getId("int");
+            errorSem=true;
         }
         else{
             $$.tipo =
@@ -1111,7 +1266,7 @@ E :
            !esNumerico($3.tipo)){
             cerr << "Error: división inválida"
                  << endl;
-            $$.tipo = tablaTipos.getId("int");
+            errorSem=true;
         }
         else{
             $$.tipo =
@@ -1147,6 +1302,7 @@ E :
            !esNumerico($3.tipo)){
             cerr << "Comparación inválida"
                  << endl;
+            errorSem=true;
         }
         $$.tipo =
             tablaTipos.getId("bool");
@@ -1179,6 +1335,7 @@ E :
            !esNumerico($3.tipo)){
             cerr << "Comparación inválida"
                  << endl;
+            errorSem=true;
         }
         $$.tipo =
             tablaTipos.getId("bool");
@@ -1211,6 +1368,7 @@ E :
            !esNumerico($3.tipo)){
             cerr << "Comparación inválida"
                  << endl;
+            errorSem=true;
         }
         $$.tipo =
             tablaTipos.getId("bool");
@@ -1243,6 +1401,7 @@ E :
            !esNumerico($3.tipo)){
             cerr << "Comparación inválida"
                  << endl;
+            errorSem=true;
         }
         $$.tipo =
             tablaTipos.getId("bool");
@@ -1277,6 +1436,7 @@ E :
                              $1.tipo)){
             cerr << "Comparación inválida"
                  << endl;
+            errorSem=true;
         }
         $$.tipo =
             tablaTipos.getId("bool");
@@ -1312,6 +1472,7 @@ E :
 
             cerr << "Comparación inválida"
                  << endl;
+            errorSem=true;
         }
         $$.tipo =
             tablaTipos.getId("bool");
@@ -1690,6 +1851,7 @@ E :
                     << "Cantidad incorrecta de argumentos en llamada a "
                     << id
                     << endl;
+                errorSem = true;
             }
 
             // ====================================================

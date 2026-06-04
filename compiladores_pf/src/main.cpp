@@ -5,6 +5,9 @@
 #include "headers/Lexer.hpp"
 #include "headers/Parser.hpp"
 #include "headers/TAC.hpp"
+#include "headers/ErrorSem.hpp"
+
+bool errorSem = false;
 
 int main(int argc, char *argv[]) {
 
@@ -47,17 +50,6 @@ int main(int argc, char *argv[]) {
 
     extern vector<string> codigo;
 
-    if(result == 0){
-
-        cout << endl;
-        cout << "===== TAC =====" << endl;
-
-        for(string instr : codigo){
-
-            cout << instr << endl;
-        }
-    }
-
     in.close();
 
     // ========================================================
@@ -83,7 +75,7 @@ int main(int argc, char *argv[]) {
         << "-------------------------------------------"
         << std::endl;
 
-    if (result == 0) {
+    if (result == 0 && !errorSem) {
 
         std::cout
             << "Analisis completado exitosamente."
