@@ -28,15 +28,16 @@ y.output
 *.out
 *.exe
 
-# Generated files
-src/Lexep.cpp
-src/Parser.cpp
-src/Parse.hpp
-src/*.o
-src/comp
-src/lexer
-src/parser
-src/*.d
+# --- Generated files ---
+**/Lexer.cpp
+**/Parser.cpp
+**/Parser.hpp
+**/Parse.hpp
+**/*.o
+**/comp
+**/lexer
+**/parser
+**/*.d
 
 .zip
 
