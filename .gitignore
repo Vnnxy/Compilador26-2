@@ -32,7 +32,7 @@ y.output
 **/Lexer.cpp
 **/Parser.cpp
 **/Parser.hpp
-**/Parse.hpp
+**/Parser.hpp
 **/*.o
 **/comp
 **/lexer
