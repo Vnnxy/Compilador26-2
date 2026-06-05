@@ -1,9 +1,9 @@
-int f(int a, float b, int c, char d)
+def int f(int a, float b, int c, char d)
 {
     return a;
 }
 
-int main()
+def int main()
 {
     int x;
 

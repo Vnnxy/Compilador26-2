@@ -34,6 +34,7 @@
     #include "TypeTab.hpp"
     #include "SymTab.hpp"
     #include "PilaTs.hpp"
+    #include "ErrorSem.hpp"
 
     namespace C1 {
         class Lexer;
@@ -77,6 +78,10 @@
     int tipoReturn = -1;
 
     stack<string> pilaBreak;
+
+    bool funcionValida = true;
+
+    int tipoStructActual;
 
     // ========================================================
     // FUNCIONES AUXILIARES DE TIPOS
@@ -227,6 +232,7 @@
 
 %type <Attr> P
 %type <Attr> D
+%type <Attr> STRUCT_VARS
 
 %type <Attr> T
 %type <Attr> B
@@ -235,6 +241,7 @@
 %type <Attr> L
 %type <Attr> F
 
+%type <Attr> LVALUE
 %type <Attr> S
 %type <Attr> STMT
 
@@ -285,6 +292,30 @@ P :
 // DECLARACIONES
 // ============================================================
 
+STRUCT_VARS :
+    ID
+    {
+        // currentType was set in your mid-rule action in D!
+        if (currentType != -1) {
+            pilaTs.top()->addSym($1, dir, currentType, "var");
+            dir += tablaTipos.getTam(currentType);
+        }
+        free($1);
+    }
+    | STRUCT_VARS COMMA ID
+    {
+        if (currentType != -1) {
+            pilaTs.top()->addSym($3, dir, currentType, "var");
+            dir += tablaTipos.getTam(currentType);
+        }
+        free($3);
+    }
+    | /* epsilon */  // Para cuando solo declaras el struct sin variables: struct X { ... };
+    {
+        $$ = Attr();
+    }
+;
+
 D :
 
     FUNC D
@@ -327,10 +358,9 @@ D :
             currentType = tipoStruct; 
         }
     }
-    L SEMICOLON D
+    STRUCT_VARS  SEMICOLON D
 
     {
-        // Final action — just free the ID
         if($2) free($2);
     }
 
@@ -397,12 +427,6 @@ FUNC :
 
         dir = pilaDir.top();
         pilaDir.pop();
-
-        //Invertir la lista de parámetros, ya que estos se procesan de derecha a izquierda 
-        reverse(
-            listaParams.begin(),
-            listaParams.end()
-        );
 
         // Registrar función global
         pilaTs.bottom()->addSym(
@@ -608,51 +632,21 @@ L :
 // PARÁMETROS
 // ============================================================
 
-F :
-
-    T ID COMMA F
-
+F : F COMMA T ID
     {
-        string id = $2;
-
-        pilaTs.top()->addSym(id,
-                             dir,
-                             $1.tipo,
-                             "param");
-
+        pilaTs.top()->addSym($4, dir, $3.tipo, "param");
+        dir += tablaTipos.getTam($3.tipo);
+        listaParams.push_back($3.tipo);
+        free($4);
+    }
+  | T ID
+    {
+        pilaTs.top()->addSym($2, dir, $1.tipo, "param");
         dir += tablaTipos.getTam($1.tipo);
-
         listaParams.push_back($1.tipo);
-
         free($2);
     }
-
-    |
-
-    T ID
-
-    {
-        string id = $2;
-
-        pilaTs.top()->addSym(id,
-                             dir,
-                             $1.tipo,
-                             "param");
-
-        dir += tablaTipos.getTam($1.tipo);
-
-        listaParams.push_back($1.tipo);
-
-        free($2);
-    }
-
-    |
-
-    /* epsilon */
-    {
-        $$ = Attr();
-    }
-
+  | /* epsilon */ { $$ = Attr(); }
 ;
 
 // ============================================================
@@ -693,80 +687,107 @@ S:
     }
 ;
 
-STMT :
-
-    ID ASSIGN E SEMICOLON
-
+LVALUE : 
+    ID
     {
         string id = $1;
-
-        if(!pilaTs.lookup(id)){
-
-            cerr << "Variable no declarada: "
-                 << id
-                 << endl;
+        
+        if (!pilaTs.lookup(id)) {
+            cerr << "Variable no declarada: " << id << endl;
+            $$.tipo = tablaTipos.getId("int");
+            $$.dir  = id;
+        } else {
+            $$.tipo = pilaTs.lookupType(id);
+            $$.dir  = id;          // use name as address in TAC
         }
-        else{
-
-            int tipoVar =
-                pilaTs.lookupType(id);
-
-            if(!tiposCompatibles(tipoVar, $3.tipo)){
-                cerr 
-                    << "Tipos incompatibles en asignación"
-                    << endl;
-            }
-            else{
-
-                $$.code = $3.code;
-
-                $$.code.push_back(
-                    id + " = " + $3.dir
-                );
-            }
-        }
-
+        $$.code = {};
+        
         free($1);
     }
 
-    | ID DOT ID ASSIGN E SEMICOLON
+    | LVALUE LBRACKET E RBRACKET
     {
-        string base = $1;
+        int baseType = tablaTipos.getTipoBase($1.tipo);
+        if (baseType == -1) {
+            cerr << "Subíndice sobre tipo no arreglo" << endl;
+            $$.tipo = tablaTipos.getId("int");
+            $$.dir  = $1.dir;
+            $$.ldir = $1.dir;
+        } else {
+            if (!esNumerico($3.tipo)) {
+                cerr << "Índice de arreglo no entero" << endl;
+            }
+
+            int tamBase = tablaTipos.getTam(baseType);
+
+            string tOffset = nuevaTemp();
+            string tVal    = nuevaTemp();
+
+            $$.code = $1.code;
+            $$.code.insert($$.code.end(), $3.code.begin(), $3.code.end());
+
+            $$.code.push_back(
+                tOffset + " = " + $3.dir + " * " + to_string(tamBase)
+            );
+
+            // ldir = the addressable form (used when this is an assignment target)
+            $$.ldir = $1.dir + "[" + tOffset + "]";
+
+            // dir = a temp holding the loaded value (used when this is an rvalue)
+            $$.code.push_back(tVal + " = " + $$.ldir);
+            $$.dir  = tVal;
+            $$.tipo = baseType;
+        }
+    }
+
+    | LVALUE DOT ID
+    {
         string campo = $3;
+        SymTab* tsStruct = tablaTipos.getTS($1.tipo);
 
-        if(!pilaTs.lookup(base)){
-            cerr << "Variable no declarada: " << base << endl;
-        }
-        else{
-            int tipoBase = pilaTs.lookupType(base);
-            cerr << "DEBUG: base=" << base 
-         << " tipoBase=" << tipoBase << endl;
-            SymTab* tsStruct = tablaTipos.getTS(tipoBase);
-               cerr << "DEBUG: tsStruct=" << tsStruct << endl;
-            if(tsStruct == nullptr){
-                cerr << "Acceso con '.' sobre tipo no struct" << endl;
-            }
-            else if(!tsStruct->existe(campo)){
-                cerr << "Campo inexistente: " << campo << endl;
-            }
-            else{
-                int tipoCampo = tsStruct->getType(campo);
-                if(!tiposCompatibles(tipoCampo, $5.tipo)){
-                    cerr << "Tipos incompatibles en asignación" << endl;
-                }
-                else{
-                    $$.code = $5.code;
-                    $$.code.push_back(
-                        base + "." + campo + " = " + $5.dir
-                    );
-                }
-            }
+        if (tsStruct == nullptr) {
+            cerr << "Acceso con '.' sobre tipo no struct" << endl;
+            $$.tipo = tablaTipos.getId("int");
+            $$.dir  = $1.dir;
+            $$.ldir = $1.dir;
+        } else if (!tsStruct->existe(campo)) {
+            cerr << "Campo inexistente: " << campo << endl;
+            $$.tipo = tablaTipos.getId("int");
+            $$.dir  = $1.dir;
+            $$.ldir = $1.dir;
+        } else {
+            $$.tipo = tsStruct->getType(campo);
+            $$.code = $1.code;
+
+            // ldir = the addressable form (used when this is an assignment target)
+            $$.ldir = $1.dir + "." + campo;
+
+            // dir = a temp holding the loaded value (used when this is an rvalue)
+            string t = nuevaTemp();
+            $$.code.push_back(t + " = " + $$.ldir);
+            $$.dir = t;
         }
 
-        free($1);
         free($3);
     }
+;
 
+STMT :
+
+    LVALUE ASSIGN E SEMICOLON
+    {
+        if (!tiposCompatibles($1.tipo, $3.tipo)) {
+            cerr << "Tipos incompatibles en asignación" << endl;
+        }
+
+        $$.code = $1.code;
+        $$.code.insert($$.code.end(), $3.code.begin(), $3.code.end());
+
+        string dest = $1.ldir.empty() ? $1.dir : $1.ldir;
+        $$.code.push_back(dest + " = " + $3.dir);
+        
+    }
+    
     |
 
     IF LPAREN E RPAREN STMT
@@ -1549,61 +1570,7 @@ E :
         $$.tipo = $2.tipo;
         $$.dir = $2.dir;
     }
-
-    |
-
-    E LBRACKET E RBRACKET
-
-    {
-        // ==========================
-        // índice debe ser entero
-        // ==========================
-
-        if($3.tipo != tablaTipos.getId("int")){
-            cerr
-                << "Indice de arreglo no entero"
-                << endl;
-        }
-
-        // ==========================
-        // E debe ser arreglo
-        // ==========================
-
-        int tipoBase =
-            tablaTipos.getTipoBase($1.tipo);
-
-        $$.code = $1.code;
-
-        $$.code.insert(
-            $$.code.end(),
-            $3.code.begin(),
-            $3.code.end()
-        );
-
-        if(tipoBase == -1){
-            cerr
-                << "Indexacion sobre variable no arreglo"
-                << endl;
-
-            $$.tipo =
-                tablaTipos.getId("int");
-        }
-        else{
-            $$.tipo = tipoBase;
-
-            string t = nuevaTemp();
-
-            $$.code.push_back(
-                t + " = " +
-                $1.dir +
-                "[" +
-                $3.dir +
-                "]"
-            );
-
-            $$.dir = t;
-        }
-    }
+    
 
     |
 
@@ -1659,27 +1626,14 @@ E :
         $$.dir = "false";
     }
 
-    |
-
-    ID
-
+    | LVALUE
     {
-        string id = $1;
-
-        if(pilaTs.lookup(id)){
-
-            $$.tipo =
-                pilaTs.lookupType(id);
-            $$.dir = id;
-        }
-        else{
-
-            cerr << "Variable no declarada: "
-                 << id
-                 << endl;
-        }
-
-        free($1);
+        $$.dir = $1.dir;
+        $$.tipo = $1.tipo;
+        $$.code = $1.code;
+        // $$.dir = nuevaTemporal();
+        // genCode($$.dir + " = " + $1.base + "[" + $1.dir + "]");
+        // $$.tipo = $1.tipo;
     }
 
     |

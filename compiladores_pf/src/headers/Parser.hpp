@@ -45,7 +45,7 @@
 #ifndef YY_YY_HEADERS_PARSER_HPP_INCLUDED
 # define YY_YY_HEADERS_PARSER_HPP_INCLUDED
 // "%code requires" blocks.
-#line 23 "parser.yy"
+#line 26 "parser.yy"
 
 
     #include <string>
@@ -57,12 +57,13 @@
     #include "TypeTab.hpp"
     #include "SymTab.hpp"
     #include "PilaTs.hpp"
+    #include "ErrorSem.hpp"
 
     namespace C1 {
         class Lexer;
     }
 
-#line 66 "headers/Parser.hpp"
+#line 67 "headers/Parser.hpp"
 
 
 # include <cstdlib> // std::abort
@@ -193,12 +194,12 @@
 
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 
 #line 13 "parser.yy"
 namespace C1 {
-#line 202 "headers/Parser.hpp"
+#line 203 "headers/Parser.hpp"
 
 
 
@@ -395,6 +396,7 @@ namespace C1 {
     union union_type
     {
       // P
+      // STRUCT_VARS
       // D
       // FUNC
       // T
@@ -404,6 +406,7 @@ namespace C1 {
       // F
       // BLOQUE
       // S
+      // LVALUE
       // STMT
       // RETURN_STMT
       // E
@@ -473,39 +476,41 @@ namespace C1 {
     BOOL = 264,                    // BOOL
     CHAR = 265,                    // CHAR
     STRUCT = 266,                  // STRUCT
-    IF = 267,                      // IF
-    ELSE = 268,                    // ELSE
-    WHILE = 269,                   // WHILE
-    FOR = 270,                     // FOR
-    BREAK = 271,                   // BREAK
-    RETURN = 272,                  // RETURN
-    TRUE = 273,                    // TRUE
-    FALSE = 274,                   // FALSE
-    PLUS = 275,                    // PLUS
-    MINUS = 276,                   // MINUS
-    MULT = 277,                    // MULT
-    DIV = 278,                     // DIV
-    ASSIGN = 279,                  // ASSIGN
-    EQ = 280,                      // EQ
-    NEQ = 281,                     // NEQ
-    LT = 282,                      // LT
-    GT = 283,                      // GT
-    LE = 284,                      // LE
-    GE = 285,                      // GE
-    AND = 286,                     // AND
-    OR = 287,                      // OR
-    NOT = 288,                     // NOT
-    SEMICOLON = 289,               // SEMICOLON
-    COMMA = 290,                   // COMMA
-    DOT = 291,                     // DOT
-    LBRACKET = 292,                // LBRACKET
-    RBRACKET = 293,                // RBRACKET
-    LBRACE = 294,                  // LBRACE
-    RBRACE = 295,                  // RBRACE
-    LPAREN = 296,                  // LPAREN
-    RPAREN = 297,                  // RPAREN
-    REGISTER = 298,                // REGISTER
-    LOWER_THAN_ELSE = 299          // LOWER_THAN_ELSE
+    DEF = 267,                     // DEF
+    IF = 268,                      // IF
+    ELSE = 269,                    // ELSE
+    WHILE = 270,                   // WHILE
+    FOR = 271,                     // FOR
+    BREAK = 272,                   // BREAK
+    RETURN = 273,                  // RETURN
+    TRUE = 274,                    // TRUE
+    FALSE = 275,                   // FALSE
+    PLUS = 276,                    // PLUS
+    MINUS = 277,                   // MINUS
+    MULT = 278,                    // MULT
+    DIV = 279,                     // DIV
+    MOD = 280,                     // MOD
+    ASSIGN = 281,                  // ASSIGN
+    EQ = 282,                      // EQ
+    NEQ = 283,                     // NEQ
+    LT = 284,                      // LT
+    GT = 285,                      // GT
+    LE = 286,                      // LE
+    GE = 287,                      // GE
+    AND = 288,                     // AND
+    OR = 289,                      // OR
+    NOT = 290,                     // NOT
+    SEMICOLON = 291,               // SEMICOLON
+    COMMA = 292,                   // COMMA
+    DOT = 293,                     // DOT
+    LBRACKET = 294,                // LBRACKET
+    RBRACKET = 295,                // RBRACKET
+    LBRACE = 296,                  // LBRACE
+    RBRACE = 297,                  // RBRACE
+    LPAREN = 298,                  // LPAREN
+    RPAREN = 299,                  // RPAREN
+    REGISTER = 300,                // REGISTER
+    LOWER_THAN_ELSE = 301          // LOWER_THAN_ELSE
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -522,7 +527,7 @@ namespace C1 {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 45, ///< Number of tokens.
+        YYNTOKENS = 47, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -536,59 +541,64 @@ namespace C1 {
         S_BOOL = 9,                              // BOOL
         S_CHAR = 10,                             // CHAR
         S_STRUCT = 11,                           // STRUCT
-        S_IF = 12,                               // IF
-        S_ELSE = 13,                             // ELSE
-        S_WHILE = 14,                            // WHILE
-        S_FOR = 15,                              // FOR
-        S_BREAK = 16,                            // BREAK
-        S_RETURN = 17,                           // RETURN
-        S_TRUE = 18,                             // TRUE
-        S_FALSE = 19,                            // FALSE
-        S_PLUS = 20,                             // PLUS
-        S_MINUS = 21,                            // MINUS
-        S_MULT = 22,                             // MULT
-        S_DIV = 23,                              // DIV
-        S_ASSIGN = 24,                           // ASSIGN
-        S_EQ = 25,                               // EQ
-        S_NEQ = 26,                              // NEQ
-        S_LT = 27,                               // LT
-        S_GT = 28,                               // GT
-        S_LE = 29,                               // LE
-        S_GE = 30,                               // GE
-        S_AND = 31,                              // AND
-        S_OR = 32,                               // OR
-        S_NOT = 33,                              // NOT
-        S_SEMICOLON = 34,                        // SEMICOLON
-        S_COMMA = 35,                            // COMMA
-        S_DOT = 36,                              // DOT
-        S_LBRACKET = 37,                         // LBRACKET
-        S_RBRACKET = 38,                         // RBRACKET
-        S_LBRACE = 39,                           // LBRACE
-        S_RBRACE = 40,                           // RBRACE
-        S_LPAREN = 41,                           // LPAREN
-        S_RPAREN = 42,                           // RPAREN
-        S_REGISTER = 43,                         // REGISTER
-        S_LOWER_THAN_ELSE = 44,                  // LOWER_THAN_ELSE
-        S_YYACCEPT = 45,                         // $accept
-        S_P = 46,                                // P
-        S_47_1 = 47,                             // $@1
-        S_D = 48,                                // D
-        S_49_2 = 49,                             // $@2
-        S_FUNC = 50,                             // FUNC
-        S_51_3 = 51,                             // $@3
-        S_T = 52,                                // T
-        S_53_4 = 53,                             // $@4
-        S_54_5 = 54,                             // $@5
-        S_B = 55,                                // B
-        S_A = 56,                                // A
-        S_L = 57,                                // L
-        S_F = 58,                                // F
-        S_BLOQUE = 59,                           // BLOQUE
-        S_S = 60,                                // S
-        S_STMT = 61,                             // STMT
-        S_RETURN_STMT = 62,                      // RETURN_STMT
-        S_E = 63,                                // E
-        S_ARGS = 64                              // ARGS
+        S_DEF = 12,                              // DEF
+        S_IF = 13,                               // IF
+        S_ELSE = 14,                             // ELSE
+        S_WHILE = 15,                            // WHILE
+        S_FOR = 16,                              // FOR
+        S_BREAK = 17,                            // BREAK
+        S_RETURN = 18,                           // RETURN
+        S_TRUE = 19,                             // TRUE
+        S_FALSE = 20,                            // FALSE
+        S_PLUS = 21,                             // PLUS
+        S_MINUS = 22,                            // MINUS
+        S_MULT = 23,                             // MULT
+        S_DIV = 24,                              // DIV
+        S_MOD = 25,                              // MOD
+        S_ASSIGN = 26,                           // ASSIGN
+        S_EQ = 27,                               // EQ
+        S_NEQ = 28,                              // NEQ
+        S_LT = 29,                               // LT
+        S_GT = 30,                               // GT
+        S_LE = 31,                               // LE
+        S_GE = 32,                               // GE
+        S_AND = 33,                              // AND
+        S_OR = 34,                               // OR
+        S_NOT = 35,                              // NOT
+        S_SEMICOLON = 36,                        // SEMICOLON
+        S_COMMA = 37,                            // COMMA
+        S_DOT = 38,                              // DOT
+        S_LBRACKET = 39,                         // LBRACKET
+        S_RBRACKET = 40,                         // RBRACKET
+        S_LBRACE = 41,                           // LBRACE
+        S_RBRACE = 42,                           // RBRACE
+        S_LPAREN = 43,                           // LPAREN
+        S_RPAREN = 44,                           // RPAREN
+        S_REGISTER = 45,                         // REGISTER
+        S_LOWER_THAN_ELSE = 46,                  // LOWER_THAN_ELSE
+        S_YYACCEPT = 47,                         // $accept
+        S_P = 48,                                // P
+        S_49_1 = 49,                             // $@1
+        S_STRUCT_VARS = 50,                      // STRUCT_VARS
+        S_D = 51,                                // D
+        S_52_2 = 52,                             // $@2
+        S_53_3 = 53,                             // $@3
+        S_FUNC = 54,                             // FUNC
+        S_55_4 = 55,                             // $@4
+        S_T = 56,                                // T
+        S_57_5 = 57,                             // $@5
+        S_58_6 = 58,                             // $@6
+        S_B = 59,                                // B
+        S_A = 60,                                // A
+        S_L = 61,                                // L
+        S_F = 62,                                // F
+        S_BLOQUE = 63,                           // BLOQUE
+        S_S = 64,                                // S
+        S_LVALUE = 65,                           // LVALUE
+        S_STMT = 66,                             // STMT
+        S_RETURN_STMT = 67,                      // RETURN_STMT
+        S_E = 68,                                // E
+        S_ARGS = 69                              // ARGS
       };
     };
 
@@ -624,6 +634,7 @@ namespace C1 {
         switch (this->kind ())
     {
       case symbol_kind::S_P: // P
+      case symbol_kind::S_STRUCT_VARS: // STRUCT_VARS
       case symbol_kind::S_D: // D
       case symbol_kind::S_FUNC: // FUNC
       case symbol_kind::S_T: // T
@@ -633,6 +644,7 @@ namespace C1 {
       case symbol_kind::S_F: // F
       case symbol_kind::S_BLOQUE: // BLOQUE
       case symbol_kind::S_S: // S
+      case symbol_kind::S_LVALUE: // LVALUE
       case symbol_kind::S_STMT: // STMT
       case symbol_kind::S_RETURN_STMT: // RETURN_STMT
       case symbol_kind::S_E: // E
@@ -762,6 +774,7 @@ namespace C1 {
 switch (yykind)
     {
       case symbol_kind::S_P: // P
+      case symbol_kind::S_STRUCT_VARS: // STRUCT_VARS
       case symbol_kind::S_D: // D
       case symbol_kind::S_FUNC: // FUNC
       case symbol_kind::S_T: // T
@@ -771,6 +784,7 @@ switch (yykind)
       case symbol_kind::S_F: // F
       case symbol_kind::S_BLOQUE: // BLOQUE
       case symbol_kind::S_S: // S
+      case symbol_kind::S_LVALUE: // LVALUE
       case symbol_kind::S_STMT: // STMT
       case symbol_kind::S_RETURN_STMT: // RETURN_STMT
       case symbol_kind::S_E: // E
@@ -801,14 +815,11 @@ switch (yykind)
         Base::clear ();
       }
 
-#if YYDEBUG || 0
       /// The user-facing name of this symbol.
-      const char *name () const YY_NOEXCEPT
+      std::string name () const YY_NOEXCEPT
       {
         return Parser::symbol_name (this->kind ());
       }
-#endif // #if YYDEBUG || 0
-
 
       /// Backward compatibility (Bison 3.6).
       symbol_kind_type type_get () const YY_NOEXCEPT;
@@ -964,12 +975,9 @@ switch (yykind)
     /// Report a syntax error.
     void error (const syntax_error& err);
 
-#if YYDEBUG || 0
     /// The user-facing name of the symbol whose (internal) number is
     /// YYSYMBOL.  No bounds checking.
-    static const char *symbol_name (symbol_kind_type yysymbol);
-#endif // #if YYDEBUG || 0
-
+    static std::string symbol_name (symbol_kind_type yysymbol);
 
     // Implementation of make_symbol for each token kind.
 #if 201103L <= YY_CPLUSPLUS
@@ -1155,6 +1163,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_DEF ()
+      {
+        return symbol_type (token::DEF);
+      }
+#else
+      static
+      symbol_type
+      make_DEF ()
+      {
+        return symbol_type (token::DEF);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_IF ()
       {
         return symbol_type (token::IF);
@@ -1330,6 +1353,21 @@ switch (yykind)
       make_DIV ()
       {
         return symbol_type (token::DIV);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_MOD ()
+      {
+        return symbol_type (token::MOD);
+      }
+#else
+      static
+      symbol_type
+      make_MOD ()
+      {
+        return symbol_type (token::MOD);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1648,6 +1686,22 @@ switch (yykind)
       }
 #endif
 
+
+    class context
+    {
+    public:
+      context (const Parser& yyparser, const symbol_type& yyla);
+      const symbol_type& lookahead () const YY_NOEXCEPT { return yyla_; }
+      symbol_kind_type token () const YY_NOEXCEPT { return yyla_.kind (); }
+      /// Put in YYARG at most YYARGN of the expected tokens, and return the
+      /// number of tokens stored in YYARG.  If YYARG is null, return the
+      /// number of expected tokens (guaranteed to be less than YYNTOKENS).
+      int expected_tokens (symbol_kind_type yyarg[], int yyargn) const;
+
+    private:
+      const Parser& yyparser_;
+      const symbol_type& yyla_;
+    };
 
   private:
 #if YY_CPLUSPLUS < 201103L
@@ -1661,6 +1715,13 @@ switch (yykind)
     /// Stored state numbers (used for stacks).
     typedef unsigned char state_type;
 
+    /// The arguments of the error message.
+    int yy_syntax_error_arguments_ (const context& yyctx,
+                                    symbol_kind_type yyarg[], int yyargn) const;
+
+    /// Generate an error message.
+    /// \param yyctx     the context in which the error occurred.
+    virtual std::string yysyntax_error_ (const context& yyctx) const;
     /// Compute post-reduction state.
     /// \param yystate   the current state
     /// \param yysym     the nonterminal to push on the stack
@@ -1682,10 +1743,11 @@ switch (yykind)
     /// are valid, yet not members of the token_kind_type enum.
     static symbol_kind_type yytranslate_ (int t) YY_NOEXCEPT;
 
-#if YYDEBUG || 0
+    /// Convert the symbol name \a n to a form suitable for a diagnostic.
+    static std::string yytnamerr_ (const char *yystr);
+
     /// For a symbol, its name in clear.
     static const char* const yytname_[];
-#endif // #if YYDEBUG || 0
 
 
     // Tables.
@@ -1707,7 +1769,7 @@ switch (yykind)
     // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
     // positive, shift that token.  If negative, reduce the rule whose
     // number is the opposite.  If YYTABLE_NINF, syntax error.
-    static const short yytable_[];
+    static const unsigned char yytable_[];
 
     static const short yycheck_[];
 
@@ -1951,8 +2013,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 351,     ///< Last index in yytable_.
-      yynnts_ = 20,  ///< Number of nonterminal symbols.
+      yylast_ = 355,     ///< Last index in yytable_.
+      yynnts_ = 23,  ///< Number of nonterminal symbols.
       yyfinal_ = 3 ///< Termination state number.
     };
 
@@ -1965,7 +2027,7 @@ switch (yykind)
 
 #line 13 "parser.yy"
 } // C1
-#line 1969 "headers/Parser.hpp"
+#line 2031 "headers/Parser.hpp"
 
 
 
