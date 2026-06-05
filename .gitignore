@@ -21,10 +21,22 @@ y.tab.h
 y.output
 
 # --- General Build Artifacts & Executables ---
+*.a
+*.os
 *.o
 *.obj
 *.out
 *.exe
+
+# Generated files
+src/Lexep.cpp
+src/Parser.cpp
+src/Parse.hpp
+src/*.o
+src/comp
+src/lexer
+src/parser
+src/*.d
 
 .zip
 
