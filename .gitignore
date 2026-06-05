@@ -26,3 +26,5 @@ y.output
 *.out
 *.exe
 
+.zip
+
