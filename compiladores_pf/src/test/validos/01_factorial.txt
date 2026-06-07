@@ -1,0 +1,23 @@
+// Calculo iterativo del factorial
+// Cubre: funciones, while, variables locales, retorno de valor
+
+int n;
+int resultado;
+
+def int factorial(int num){
+    int acum;
+    int i;
+    acum = 1;
+    i = num;
+    while(i > 0){
+        acum = acum * i;
+        i = i - 1;
+    }
+    return acum;
+}
+
+def int main(){
+    n = 7;
+    resultado = factorial(n);
+    return 0;
+}

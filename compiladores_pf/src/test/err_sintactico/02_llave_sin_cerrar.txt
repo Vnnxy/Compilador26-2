@@ -1,0 +1,9 @@
+// ERROR SINTACTICO: falta '}' para cerrar el cuerpo de main
+// El parser llega al final del archivo sin encontrar el cierre de la funcion
+
+int x;
+
+def int main(){
+    x = 5;
+    return 0;
+

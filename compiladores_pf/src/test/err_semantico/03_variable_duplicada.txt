@@ -1,0 +1,12 @@
+// ERROR SEMANTICO: 'x' se declara dos veces en el mismo ambito global
+// El compilador debe reportar: "Variable duplicada" en la segunda declaracion
+
+int x;
+int y;
+int x;
+
+def int main(){
+    x = 1;
+    y = 2;
+    return 0;
+}

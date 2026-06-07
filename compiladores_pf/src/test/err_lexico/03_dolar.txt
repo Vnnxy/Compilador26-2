@@ -1,0 +1,10 @@
+// ERROR LEXICO: '$' no es un caracter valido del lenguaje
+// Los identificadores solo pueden comenzar con letra o guion bajo
+
+int precio;
+
+def int main(){
+    $precio = 500;
+    precio = $precio + 100;
+    return 0;
+}
