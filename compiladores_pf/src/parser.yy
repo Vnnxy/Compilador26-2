@@ -669,6 +669,7 @@ LVALUE :
         
         if (!pilaTs.lookup(id)) {
             cerr << "Variable no declarada: " << id << endl;
+            errorSem = true;
             $$.tipo = tablaTipos.getId("int");
             $$.dir  = id;
         } else {
@@ -685,6 +686,7 @@ LVALUE :
         int baseType = tablaTipos.getTipoBase($1.tipo);
         if (baseType == -1) {
             cerr << "Subíndice sobre tipo no arreglo" << endl;
+            errorSem = true;
             $$.tipo = tablaTipos.getId("int");
             $$.dir  = $1.dir;
             $$.ldir = $1.dir;
