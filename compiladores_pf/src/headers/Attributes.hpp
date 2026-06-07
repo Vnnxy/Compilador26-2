@@ -31,6 +31,8 @@ struct Attr {
 
     string nextLabel;
 
+    string ldir;
+
     // Lista de tipos (args/params)
     vector<int> lista;
 
