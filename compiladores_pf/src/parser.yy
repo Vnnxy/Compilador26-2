@@ -597,33 +597,6 @@ L :
 
     |
 
-    ID
-
-    {
-        string id = $1;
-
-        if(!pilaTs.lookup(id)){
-
-            pilaTs.top()->addSym(id,
-                                 dir,
-                                 currentType,
-                                 "var");
-
-            dir += tablaTipos.getTam(currentType);
-        }
-        else{
-
-            cerr << "Variable redeclarada: "
-                 << id
-                 << endl;
-            errorSem = true;
-        }
-
-        free($1);
-    }
-
-    |
-
     ID A
 
     {
@@ -706,8 +679,6 @@ LVALUE :
         
         free($1);
     }
-
-    |
 
     | LVALUE LBRACKET E RBRACKET
     {
