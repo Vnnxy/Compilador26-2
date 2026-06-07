@@ -682,40 +682,40 @@ LVALUE :
     }
 
     | LVALUE LBRACKET E RBRACKET
-    {
-        int baseType = tablaTipos.getTipoBase($1.tipo);
-        if (baseType == -1) {
-            cerr << "Subíndice sobre tipo no arreglo" << endl;
-            errorSem = true;
-            $$.tipo = tablaTipos.getId("int");
-            $$.dir  = $1.dir;
-            $$.ldir = $1.dir;
-        } else {
-            if (!esNumerico($3.tipo)) {
-                cerr << "Índice de arreglo no entero" << endl;
-            }
-
-            int tamBase = tablaTipos.getTam(baseType);
-
-            string tOffset = nuevaTemp();
-            string tVal    = nuevaTemp();
-
-            $$.code = $1.code;
-            $$.code.insert($$.code.end(), $3.code.begin(), $3.code.end());
-
-            $$.code.push_back(
-                tOffset + " = " + $3.dir + " * " + to_string(tamBase)
-            );
-
-            // ldir = the addressable form (used when this is an assignment target)
-            $$.ldir = $1.dir + "[" + tOffset + "]";
-
-            // dir = a temp holding the loaded value (used when this is an rvalue)
-            $$.code.push_back(tVal + " = " + $$.ldir);
-            $$.dir  = tVal;
-            $$.tipo = baseType;
+{
+    int baseType = tablaTipos.getTipoBase($1.tipo);
+    if (baseType == -1) {
+        cerr << "Subíndice sobre tipo no arreglo" << endl;
+        errorSem = true;
+        $$.tipo = tablaTipos.getId("int");
+        $$.dir  = $1.dir;
+        $$.ldir = $1.dir;
+    } else {
+        if (!esNumerico($3.tipo)) {
+            cerr << "Índice de arreglo no entero" << endl;
         }
+
+        int tamBase = tablaTipos.getTam(baseType);
+
+        string tOffset = nuevaTemp();
+        string tVal    = nuevaTemp();
+
+        $$.code = $1.code;
+        $$.code.insert($$.code.end(), $3.code.begin(), $3.code.end());
+
+        $$.code.push_back(
+            tOffset + " = " + $3.dir + " * " + to_string(tamBase)
+        );
+
+        // ldir = addressable form (for assignment target)
+        $$.ldir = $1.dir + "[" + tOffset + "]";
+
+        // dir = loaded value (for rvalue use AND as base for further indexing)
+        $$.code.push_back(tVal + " = " + $$.ldir);
+        $$.dir  = tVal;
+        $$.tipo = baseType;
     }
+}
     | LVALUE DOT ID
     {
         string campo = $3;
@@ -739,9 +739,7 @@ LVALUE :
             $$.ldir = $1.dir + "." + campo;
 
             // dir = a temp holding the loaded value (used when this is an rvalue)
-            string t = nuevaTemp();
-            $$.code.push_back(t + " = " + $$.ldir);
-            $$.dir = t;
+            $$.dir = $$.ldir;
         }
 
         free($3);
@@ -783,6 +781,10 @@ STMT :
         }
 
         $$.code = $1.code;
+
+        if (!$1.ldir.empty() && !$$.code.empty()) {
+        $$.code.pop_back();
+    }
         $$.code.insert($$.code.end(), $3.code.begin(), $3.code.end());
 
         string dest = $1.ldir.empty() ? $1.dir : $1.ldir;
@@ -1500,78 +1502,6 @@ E :
 
     |
 
-    E DOT ID
-
-    {
-        // ====================================================
-        // Verificar que E sea struct
-        // ====================================================
-
-        SymTab* tsStruct =
-            tablaTipos.getTS($1.tipo);
-
-        if(tsStruct == nullptr){
-
-            cerr
-                << "Acceso con '.' sobre tipo no struct"
-                << endl;
-
-            $$.tipo =
-                tablaTipos.getId("int");
-        }
-
-        else{
-
-            string campo = $3;
-
-            // ====================================================
-            // Verificar campo
-            // ====================================================
-
-            if(!tsStruct->existe(campo)){
-
-                cerr
-                    << "Campo inexistente: "
-                    << campo
-                    << endl;
-
-                $$.tipo =
-                    tablaTipos.getId("int");
-            }
-
-            else{
-                
-                $$.tipo =
-                    tsStruct->getType(campo);
-
-                //int offset =
-                    // tsStruct->getDir(campo);
-
-                // ====================================================
-                // TAC
-                // ====================================================
-
-                string t = nuevaTemp();
-
-                $$.code = $1.code;
-
-                $$.code.push_back(
-                    t
-                    + " = "
-                    + $1.dir
-                    + "."
-                    + campo
-                );
-
-                $$.dir = t;
-            }
-
-            free($3);
-        }
-    }
-
-    |
-
     LPAREN E RPAREN
 
     {
@@ -1636,12 +1566,11 @@ E :
 
     | LVALUE
     {
-        $$.dir = $1.dir;
         $$.tipo = $1.tipo;
         $$.code = $1.code;
-        // $$.dir = nuevaTemporal();
-        // genCode($$.dir + " = " + $1.base + "[" + $1.dir + "]");
-        // $$.tipo = $1.tipo;
+        $$.ldir = $1.ldir;
+        $$.dir  = $1.dir;
+
     }
 
     |
