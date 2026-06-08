@@ -925,8 +925,8 @@ STMT :
 
         $$.code.insert(
             $$.code.end(),
-            $5.code.begin(),
-            $5.code.end()
+            $6.code.begin(),
+            $6.code.end()
         );
 
         $$.code.push_back(
@@ -952,7 +952,7 @@ STMT :
 
     {
         string Linicio = nuevaLabel();
-        string Lfin    = $11.dir;
+        string Lfin    = $13.dir;
 
         // Inicialización
 
@@ -989,8 +989,8 @@ STMT :
 
         $$.code.insert(
             $$.code.end(),
-            $13.code.begin(),
-            $13.code.end()
+            $14.code.begin(),
+            $14.code.end()
         );
 
         // Incremento
