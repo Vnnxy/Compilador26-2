@@ -1,0 +1,14 @@
+// ERROR LEXICO: '#' no es un caracter valido en este lenguaje
+
+
+#define LIMITE 100
+
+int i;
+
+def int main(){
+    i = 0;
+    while(i < LIMITE){
+        i = i + 1;
+    }
+    return 0;
+}

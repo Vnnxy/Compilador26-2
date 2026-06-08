@@ -137,6 +137,7 @@
 %token CHAR
 
 %token STRUCT
+%token DEF
 
 %token IF
 %token ELSE
@@ -159,6 +160,7 @@
 
 %token MULT
 %token DIV
+%token MOD
 
 %token ASSIGN
 
@@ -225,6 +227,7 @@
 
 %type <Attr> P
 %type <Attr> D
+%type <Attr> STRUCT_VARS
 
 %type <Attr> T
 %type <Attr> B
@@ -235,6 +238,7 @@
 
 %type <Attr> LVALUE
 %type <Attr> S
+%type <Attr> BREAK_MARK
 %type <Attr> STMT
 
 %type <Attr> E
@@ -284,6 +288,29 @@ P :
 // DECLARACIONES
 // ============================================================
 
+STRUCT_VARS :
+    ID
+    {
+        if (currentType != -1) {
+            pilaTs.top()->addSym($1, dir, currentType, "var");
+            dir += tablaTipos.getTam(currentType);
+        }
+        free($1);
+    }
+    | STRUCT_VARS COMMA ID
+    {
+        if (currentType != -1) {
+            pilaTs.top()->addSym($3, dir, currentType, "var");
+            dir += tablaTipos.getTam(currentType);
+        }
+        free($3);
+    }
+    | 
+    {
+        $$ = Attr();
+    }
+;
+
 D :
 
     FUNC D
@@ -303,35 +330,36 @@ D :
         dir = 0;
     }
 
-    LBRACE D RBRACE SEMICOLON D
-
+    LBRACE D RBRACE
     {
+        // Mid-rule action — runs BEFORE L
         SymTab* ts = pilaTs.pop();
-
         int tamStruct = dir;
-
         dir = pilaDir.top();
         pilaDir.pop();
 
         string nombreStruct = $2;
 
         if(tablaTipos.getId(nombreStruct) != -1){
-            cerr
-                << "Struct redeclarado: "
-                << nombreStruct
-                << endl;
+            cerr << "Struct redeclarado: " << nombreStruct << endl;
+            currentType = -1;
         }
         else{
-            tablaTipos.addStructType(
+            int tipoStruct = tablaTipos.addStructType(
                 nombreStruct,
                 tamStruct,
                 ts
             );
+            currentType = tipoStruct; 
         }
-
-        if($2) 
-            free($2);
     }
+
+    STRUCT_VARS  SEMICOLON D
+
+    {
+        if($2) free($2);
+    }
+
 
     |
 
@@ -348,18 +376,16 @@ D :
 
 FUNC :
 
-    T ID
+    DEF T ID
 
     {
-        string id = $2;
+        string id = $3;
 
         if(pilaTs.bottom()->existe(id)){
 
             cerr << "Función redeclarada: "
                  << id
                  << endl;
-            funcionValida=false;
-            errorSem = true;
         }
         else{
 
@@ -373,7 +399,7 @@ FUNC :
             dir = 0;
 
             // Guardar tipo retorno
-            tipoReturn = $1.tipo;
+            tipoReturn = $2.tipo;
         }
     }
 
@@ -382,44 +408,34 @@ FUNC :
     BLOQUE
 
     {
-        string id = $2;
+        string id = $3;
 
-        for(string instr : $7.code){
+        for(string instr : $8.code){
             codigo.push_back(instr);
         }
 
-        if(funcionValida){
-            SymTab* tsFunc = pilaTs.top();
+        SymTab* tsFunc = pilaTs.top();
 
-            cout << "\nTABLA FUNCION " << id << endl;
-            tsFunc->print();
+        cout << "\nTABLA FUNCION " << id << endl;
+        tsFunc->print();
 
-            pilaTs.pop();
+        pilaTs.pop();
 
-            dir = pilaDir.top();
-            pilaDir.pop();
+        dir = pilaDir.top();
+        pilaDir.pop();
 
-            //Invertir la lista de parámetros, ya que estos se procesan de derecha a izquierda 
-            reverse(
-                listaParams.begin(),
-                listaParams.end()
-            );
-
-            // Registrar función global
-            pilaTs.bottom()->addSym(
-                id,
-                -1, 
-                $1.tipo,
-                "func",
-                listaParams
-            );
-        }
+        pilaTs.bottom()->addSym(
+            id,
+            -1,
+            $2.tipo,
+            "func",
+            listaParams
+        );
 
         listaParams.clear();
 
-        free($2);
+        free($3);
     }
-
 ;
 
 // ============================================================
@@ -582,33 +598,6 @@ L :
 
     |
 
-    ID
-
-    {
-        string id = $1;
-
-        if(!pilaTs.lookup(id)){
-
-            pilaTs.top()->addSym(id,
-                                 dir,
-                                 currentType,
-                                 "var");
-
-            dir += tablaTipos.getTam(currentType);
-        }
-        else{
-
-            cerr << "Variable redeclarada: "
-                 << id
-                 << endl;
-            errorSem = true;
-        }
-
-        free($1);
-    }
-
-    |
-
     ID A
 
     {
@@ -643,51 +632,21 @@ L :
 // PARÁMETROS
 // ============================================================
 
-F :
-
-    T ID COMMA F
-
+F : F COMMA T ID
     {
-        string id = $2;
-
-        pilaTs.top()->addSym(id,
-                             dir,
-                             $1.tipo,
-                             "param");
-
+        pilaTs.top()->addSym($4, dir, $3.tipo, "param");
+        dir += tablaTipos.getTam($3.tipo);
+        listaParams.push_back($3.tipo);
+        free($4);
+    }
+  | T ID
+    {
+        pilaTs.top()->addSym($2, dir, $1.tipo, "param");
         dir += tablaTipos.getTam($1.tipo);
-
         listaParams.push_back($1.tipo);
-
         free($2);
     }
-
-    |
-
-    T ID
-
-    {
-        string id = $2;
-
-        pilaTs.top()->addSym(id,
-                             dir,
-                             $1.tipo,
-                             "param");
-
-        dir += tablaTipos.getTam($1.tipo);
-
-        listaParams.push_back($1.tipo);
-
-        free($2);
-    }
-
-    |
-
-    /* epsilon */
-    {
-        $$ = Attr();
-    }
-
+  | /* epsilon */ { $$ = Attr(); }
 ;
 
 // ============================================================
@@ -705,77 +664,86 @@ BLOQUE :
 
 LVALUE :
 
-    ID
+   ID
     {
         string id = $1;
-
-        if(!pilaTs.lookup(id)){
-
-            cerr
-                << "Variable no declarada: "
-                << id
-                << endl;
-
+        
+        if (!pilaTs.lookup(id)) {
+            cerr << "Variable no declarada: " << id << endl;
             errorSem = true;
-
             $$.tipo = tablaTipos.getId("int");
+            $$.dir  = id;
+        } else {
+            $$.tipo = pilaTs.lookupType(id);
+            $$.dir  = id;          // use name as address in TAC
         }
-        else{
-
-            $$.tipo =
-                pilaTs.lookupType(id);
-
-            $$.dir = id;
-        }
-
+        $$.code = {};
+        
         free($1);
     }
 
-    |
-
-    LVALUE LBRACKET E RBRACKET
-    {
-        if($3.tipo != tablaTipos.getId("int")){
-
-            cerr
-                << "Indice de arreglo no entero"
-                << endl;
-
-            errorSem = true;
+    | LVALUE LBRACKET E RBRACKET
+{
+    int baseType = tablaTipos.getTipoBase($1.tipo);
+    if (baseType == -1) {
+        cerr << "Subíndice sobre tipo no arreglo" << endl;
+        errorSem = true;
+        $$.tipo = tablaTipos.getId("int");
+        $$.dir  = $1.dir;
+        $$.ldir = $1.dir;
+    } else {
+        if (!esNumerico($3.tipo)) {
+            cerr << "Índice de arreglo no entero" << endl;
         }
 
-        int tipoBase =
-            tablaTipos.getTipoBase($1.tipo);
+        int tamBase = tablaTipos.getTam(baseType);
 
-        if(tipoBase == -1){
-
-            cerr
-                << "Indexacion sobre variable no arreglo"
-                << endl;
-
-            errorSem = true;
-
-            $$.tipo =
-                tablaTipos.getId("int");
-        }
-        else{
-
-            $$.tipo = tipoBase;
-        }
+        string tOffset = nuevaTemp();
+        string tVal    = nuevaTemp();
 
         $$.code = $1.code;
+        $$.code.insert($$.code.end(), $3.code.begin(), $3.code.end());
 
-        $$.code.insert(
-            $$.code.end(),
-            $3.code.begin(),
-            $3.code.end()
+        $$.code.push_back(
+            tOffset + " = " + $3.dir + " * " + to_string(tamBase)
         );
 
-        $$.dir =
-            $1.dir
-            + "["
-            + $3.dir
-            + "]";
+        // ldir = addressable form (for assignment target)
+        $$.ldir = $1.dir + "[" + tOffset + "]";
+
+        // dir = loaded value (for rvalue use AND as base for further indexing)
+        $$.code.push_back(tVal + " = " + $$.ldir);
+        $$.dir  = tVal;
+        $$.tipo = baseType;
+    }
+}
+    | LVALUE DOT ID
+    {
+        string campo = $3;
+        SymTab* tsStruct = tablaTipos.getTS($1.tipo);
+
+        if (tsStruct == nullptr) {
+            cerr << "Acceso con '.' sobre tipo no struct" << endl;
+            $$.tipo = tablaTipos.getId("int");
+            $$.dir  = $1.dir;
+            $$.ldir = $1.dir;
+        } else if (!tsStruct->existe(campo)) {
+            cerr << "Campo inexistente: " << campo << endl;
+            $$.tipo = tablaTipos.getId("int");
+            $$.dir  = $1.dir;
+            $$.ldir = $1.dir;
+        } else {
+            $$.tipo = tsStruct->getType(campo);
+            $$.code = $1.code;
+
+            // ldir = the addressable form (used when this is an assignment target)
+            $$.ldir = $1.dir + "." + campo;
+
+            // dir = a temp holding the loaded value (used when this is an rvalue)
+            $$.dir = $$.ldir;
+        }
+
+        free($3);
     }
 ;
 
@@ -804,76 +772,41 @@ S:
     }
 ;
 
+// ============================================================
+// AUXILIAR PARA MANEJAR PILABREAK
+// ============================================================
+
+BREAK_MARK :
+{
+    $$ = Attr();
+
+    $$.dir = nuevaLabel();
+
+    pilaBreak.push($$.dir);
+}
+;
+
 STMT :
 
-    ID ASSIGN E SEMICOLON
-
-    {
-        string id = $1;
-
-        if(!pilaTs.lookup(id)){
-
-            cerr << "Variable no declarada: "
-                 << id
-                 << endl;
-            errorSem = true;
-        }
-        else{
-
-            int tipoVar =
-                pilaTs.lookupType(id);
-
-            if(!tiposCompatibles(tipoVar, $3.tipo)){
-                cerr 
-                    << "Tipos incompatibles en asignación"
-                    << endl;
-                    errorSem=true;
-            }
-            else{
-
-                $$.code = $3.code;
-
-                $$.code.push_back(
-                    id + " = " + $3.dir
-                );
-            }
-        }
-
-        free($1);
-    }
-
-    |
-
     LVALUE ASSIGN E SEMICOLON
-
     {
-        if(!tiposCompatibles(
-                $1.tipo,
-                $3.tipo))
-        {
-
-            cerr
-                << "Tipos incompatibles en asignacion"
-                << endl;
-
+        if (!tiposCompatibles($1.tipo, $3.tipo)) {
+            cerr << "Tipos incompatibles en asignación" << endl;
             errorSem = true;
         }
 
         $$.code = $1.code;
 
-        $$.code.insert(
-            $$.code.end(),
-            $3.code.begin(),
-            $3.code.end()
-        );
-
-        $$.code.push_back(
-            $1.dir
-            + " = "
-            + $3.dir
-        );
+        if (!$1.ldir.empty() && !$$.code.empty()) {
+        $$.code.pop_back();
     }
+        $$.code.insert($$.code.end(), $3.code.begin(), $3.code.end());
 
+        string dest = $1.ldir.empty() ? $1.dir : $1.ldir;
+        $$.code.push_back(dest + " = " + $3.dir);
+        
+    }
+    
     |
 
     IF LPAREN E RPAREN STMT
@@ -885,7 +818,6 @@ STMT :
             cerr 
                 << "Condición no booleana en if"
                 << endl;
-            errorSem=true;
         }
 
         string Lfin = nuevaLabel();
@@ -921,7 +853,6 @@ STMT :
             cerr 
                 << "Condición no booleana en if"
                 << endl;
-            errorSem=true;
         }
 
         string Lelse = nuevaLabel();
@@ -963,18 +894,17 @@ STMT :
 
     |
 
-    WHILE LPAREN E RPAREN STMT
+    WHILE LPAREN E RPAREN BREAK_MARK STMT
 
     {
         if(!esBooleano($3.tipo)){
 
             cerr << "Condición no booleana en while"
                  << endl;
-            errorSem=true;
         }
 
         string Linicio = nuevaLabel();
-        string Lfin    = nuevaLabel();
+        string Lfin    = $5.dir;
 
         $$.code.push_back(
             Linicio + ":"
@@ -1006,6 +936,8 @@ STMT :
         $$.code.push_back(
             Lfin + ":"
         );
+
+        pilaBreak.pop();
     }
 
     |
@@ -1015,11 +947,12 @@ STMT :
     E SEMICOLON
     ID ASSIGN E
     RPAREN
+    BREAK_MARK
     STMT
 
     {
         string Linicio = nuevaLabel();
-        string Lfin    = nuevaLabel();
+        string Lfin    = $11.dir;
 
         // Inicialización
 
@@ -1086,6 +1019,7 @@ STMT :
 
         free($3);
         free($9);
+        pilaBreak.pop();
     }
 
     |
@@ -1093,6 +1027,22 @@ STMT :
     BREAK SEMICOLON
     {
         $$ = Attr();
+
+        if(pilaBreak.empty()){
+
+            cerr
+                << "break fuera de ciclo"
+                << endl;
+
+            errorSem = true;
+        }
+        else{
+
+            $$.code.push_back(
+                "goto " +
+                pilaBreak.top()
+            );
+        }
     }
 
     |
@@ -1116,6 +1066,7 @@ STMT :
     }
 
 ;
+
 
 // ============================================================
 // RETURN
@@ -1166,7 +1117,14 @@ E :
                            $3.tipo);
         }
 
-        string t = nuevaTemp();
+        string izq = $1.dir;
+        string der = $3.dir;
+
+        int tipoFloat =
+            tablaTipos.getId("float");
+
+        int tipoInt =
+            tablaTipos.getId("int");
 
         $$.code = $1.code;
 
@@ -1176,10 +1134,40 @@ E :
             $3.code.end()
         );
 
+        if($1.tipo == tipoInt &&
+            $3.tipo == tipoFloat){
+
+            string tcast = nuevaTemp();
+
+            $$.code.push_back(
+                tcast +
+                " = (float) " +
+                $1.dir
+            );
+
+            izq = tcast;
+        }  
+
+        if($1.tipo == tipoFloat &&
+            $3.tipo == tipoInt){
+
+            string tcast = nuevaTemp();
+
+            $$.code.push_back(
+                tcast +
+                " = (float) " +
+                $3.dir
+            );
+
+            der = tcast;
+        } 
+
+        string t = nuevaTemp();
+
         $$.code.push_back(
             t + " = " +
-            $1.dir + " + " +
-            $3.dir
+            izq + " + " +
+            der
         );
 
         $$.dir = t;
@@ -1202,7 +1190,14 @@ E :
                                $3.tipo);
         }
 
-        string t = nuevaTemp();
+        string izq = $1.dir;
+        string der = $3.dir;
+
+        int tipoFloat =
+            tablaTipos.getId("float");
+
+        int tipoInt =
+            tablaTipos.getId("int");
 
         $$.code = $1.code;
 
@@ -1212,10 +1207,40 @@ E :
             $3.code.end()
         );
 
+        if($1.tipo == tipoInt &&
+            $3.tipo == tipoFloat){
+
+            string tcast = nuevaTemp();
+
+            $$.code.push_back(
+                tcast +
+                " = (float) " +
+                $1.dir
+            );
+
+            izq = tcast;
+        }  
+
+        if($1.tipo == tipoFloat &&
+            $3.tipo == tipoInt){
+
+            string tcast = nuevaTemp();
+
+            $$.code.push_back(
+                tcast +
+                " = (float) " +
+                $3.dir
+            );
+
+            der = tcast;
+        } 
+
+        string t = nuevaTemp();
+
         $$.code.push_back(
             t + " = " +
-            $1.dir + " - " +
-            $3.dir
+            izq + " - " +
+            der
         );
 
         $$.dir = t;
@@ -1238,7 +1263,14 @@ E :
                                $3.tipo);
         }
 
-        string t = nuevaTemp();
+        string izq = $1.dir;
+        string der = $3.dir;
+
+        int tipoFloat =
+            tablaTipos.getId("float");
+
+        int tipoInt =
+            tablaTipos.getId("int");
 
         $$.code = $1.code;
 
@@ -1248,10 +1280,40 @@ E :
             $3.code.end()
         );
 
+        if($1.tipo == tipoInt &&
+            $3.tipo == tipoFloat){
+
+            string tcast = nuevaTemp();
+
+            $$.code.push_back(
+                tcast +
+                " = (float) " +
+                $1.dir
+            );
+
+            izq = tcast;
+        }  
+
+        if($1.tipo == tipoFloat &&
+            $3.tipo == tipoInt){
+
+            string tcast = nuevaTemp();
+
+            $$.code.push_back(
+                tcast +
+                " = (float) " +
+                $3.dir
+            );
+
+            der = tcast;
+        } 
+
+        string t = nuevaTemp();
+
         $$.code.push_back(
             t + " = " +
-            $1.dir + " * " +
-            $3.dir
+            izq + " * " +
+            der
         );
 
         $$.dir = t;
@@ -1274,7 +1336,14 @@ E :
                                $3.tipo);
         }
 
-        string t = nuevaTemp();
+        string izq = $1.dir;
+        string der = $3.dir;
+
+        int tipoFloat =
+            tablaTipos.getId("float");
+
+        int tipoInt =
+            tablaTipos.getId("int");
 
         $$.code = $1.code;
 
@@ -1284,10 +1353,40 @@ E :
             $3.code.end()
         );
 
+        if($1.tipo == tipoInt &&
+            $3.tipo == tipoFloat){
+
+            string tcast = nuevaTemp();
+
+            $$.code.push_back(
+                tcast +
+                " = (float) " +
+                $1.dir
+            );
+
+            izq = tcast;
+        }  
+
+        if($1.tipo == tipoFloat &&
+            $3.tipo == tipoInt){
+
+            string tcast = nuevaTemp();
+
+            $$.code.push_back(
+                tcast +
+                " = (float) " +
+                $3.dir
+            );
+
+            der = tcast;
+        } 
+
+        string t = nuevaTemp();
+
         $$.code.push_back(
             t + " = " +
-            $1.dir + " / " +
-            $3.dir
+            izq + " / " +
+            der
         );
 
         $$.dir = t;
@@ -1586,139 +1685,12 @@ E :
 
     |
 
-    E DOT ID
-
-    {
-        // ====================================================
-        // Verificar que E sea struct
-        // ====================================================
-
-        SymTab* tsStruct =
-            tablaTipos.getTS($1.tipo);
-
-        if(tsStruct == nullptr){
-
-            cerr
-                << "Acceso con '.' sobre tipo no struct"
-                << endl;
-
-            $$.tipo =
-                tablaTipos.getId("int");
-        }
-
-        else{
-
-            string campo = $3;
-
-            // ====================================================
-            // Verificar campo
-            // ====================================================
-
-            if(!tsStruct->existe(campo)){
-
-                cerr
-                    << "Campo inexistente: "
-                    << campo
-                    << endl;
-
-                $$.tipo =
-                    tablaTipos.getId("int");
-            }
-
-            else{
-                
-                $$.tipo =
-                    tsStruct->getType(campo);
-
-                //int offset =
-                    // tsStruct->getDir(campo);
-
-                // ====================================================
-                // TAC
-                // ====================================================
-
-                string t = nuevaTemp();
-
-                $$.code = $1.code;
-
-                $$.code.push_back(
-                    t
-                    + " = "
-                    + $1.dir
-                    + "."
-                    + campo
-                );
-
-                $$.dir = t;
-            }
-
-            free($3);
-        }
-    }
-
-    |
-
     LPAREN E RPAREN
 
     {
         $$.code = $2.code;
         $$.tipo = $2.tipo;
         $$.dir = $2.dir;
-    }
-
-    |
-
-    E LBRACKET E RBRACKET
-
-    {
-        // ==========================
-        // índice debe ser entero
-        // ==========================
-
-        if($3.tipo != tablaTipos.getId("int")){
-            cerr
-                << "Indice de arreglo no entero"
-                << endl;
-        }
-
-        // ==========================
-        // E debe ser arreglo
-        // ==========================
-
-        int tipoBase =
-            tablaTipos.getTipoBase($1.tipo);
-
-        $$.code = $1.code;
-
-        $$.code.insert(
-            $$.code.end(),
-            $3.code.begin(),
-            $3.code.end()
-        );
-
-        if(tipoBase == -1){
-            cerr
-                << "Indexacion sobre variable no arreglo"
-                << endl;
-
-            $$.tipo =
-                tablaTipos.getId("int");
-        }
-        else{
-            $$.tipo = tipoBase;
-
-            string t = nuevaTemp();
-
-            $$.code.push_back(
-                t + " = " +
-                $1.dir +
-                "[" +
-                $3.dir +
-                "]"
-            );
-
-            $$.dir = t;
-        }
     }
 
     |
@@ -1775,27 +1747,13 @@ E :
         $$.dir = "false";
     }
 
-    |
-
-    ID
-
+    | LVALUE
     {
-        string id = $1;
+        $$.tipo = $1.tipo;
+        $$.code = $1.code;
+        $$.ldir = $1.ldir;
+        $$.dir  = $1.dir;
 
-        if(pilaTs.lookup(id)){
-
-            $$.tipo =
-                pilaTs.lookupType(id);
-            $$.dir = id;
-        }
-        else{
-
-            cerr << "Variable no declarada: "
-                 << id
-                 << endl;
-        }
-
-        free($1);
     }
 
     |
@@ -1976,8 +1934,11 @@ ARGS :
 // ============================================================
 
 void C1::Parser::error(const std::string& msg){
-
     cerr << "Error sintáctico: "
          << msg
+         << " cerca de token: '"
+         << lexer->YYText()  // shows the actual token text
+         << "' en línea "
+         << lexer->lineno()  // shows line number
          << endl;
 }

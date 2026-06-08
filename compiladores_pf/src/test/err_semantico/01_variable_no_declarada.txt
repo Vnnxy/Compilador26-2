@@ -1,0 +1,12 @@
+// ERROR SEMANTICO: se usa 'total' sin haberla declarado
+// El compilador debe reportar: "El id no fue declarado" en la linea de la asignacion
+
+int x;
+int y;
+
+def int main(){
+    x = 10;
+    y = 5;
+    total = x + y;
+    return 0;
+}

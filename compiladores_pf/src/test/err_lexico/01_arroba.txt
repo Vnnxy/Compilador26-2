@@ -1,0 +1,11 @@
+// ERROR LEXICO: el caracter '@' no pertenece al alfabeto del lenguaje
+// El compilador debe reportar error lexico en la linea de la asignacion
+
+int x;
+int y;
+
+def int main(){
+    x = 10;
+    y = x @ 2;
+    return 0;
+}

@@ -1,0 +1,35 @@
+// Distancia Manhattan entre dos puntos 2D usando struct
+// Cubre: struct, acceso a campos, funciones con varios parametros, if-else
+
+struct Punto {
+    int x;
+    int y;
+} p1, p2;
+
+int dist;
+
+def int valorAbs(int val){
+    int res;
+    res = val;
+    if(val < 0){
+        res = 0 - val;
+    }
+    return res;
+}
+
+def int distManhattan(int x1, int y1, int x2, int y2){
+    int dx;
+    int dy;
+    dx = valorAbs(x1 - x2);
+    dy = valorAbs(y1 - y2);
+    return dx + dy;
+}
+
+def int main(){
+    p1.x = 3;
+    p1.y = 7;
+    p2.x = 10;
+    p2.y = 2;
+    dist = distManhattan(p1.x, p1.y, p2.x, p2.y);
+    return 0;
+}

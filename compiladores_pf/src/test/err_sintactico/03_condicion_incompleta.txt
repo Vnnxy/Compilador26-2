@@ -1,0 +1,14 @@
+// ERROR SINTACTICO: falta el operando derecho en la condicion del if
+// El parser encuentra ')' donde esperaba una expresion despues de '>'
+
+int x;
+int y;
+
+def int main(){
+    x = 5;
+    y = 10;
+    if(x > ){
+        y = 0;
+    }
+    return 0;
+}
