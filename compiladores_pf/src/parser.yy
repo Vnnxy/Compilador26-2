@@ -211,7 +211,7 @@
 
 %left PLUS MINUS
 
-%left MULT DIV
+%left MULT DIV MOD
 
 %right NOT
 
@@ -220,6 +220,9 @@
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
+
+%nonassoc LOWER_THAN_LPAREN
+%nonassoc LPAREN
 
 // ============================================================
 // TIPOS DE NO TERMINALES
@@ -386,6 +389,10 @@ FUNC :
             cerr << "Función redeclarada: "
                  << id
                  << endl;
+            pilaTs.push(new SymTab());
+            pilaDir.push(dir);
+            dir = 0;
+            tipoReturn = $2.tipo;
         }
         else{
 
@@ -664,7 +671,7 @@ BLOQUE :
 
 LVALUE :
 
-   ID
+   ID %prec LOWER_THAN_LPAREN
     {
         string id = $1;
         
@@ -692,7 +699,7 @@ LVALUE :
         $$.dir  = $1.dir;
         $$.ldir = $1.dir;
     } else {
-        if (!esNumerico($3.tipo)) {
+        if ($3.tipo != tablaTipos.getId("int")) {
             cerr << "Índice de arreglo no entero" << endl;
         }
 
@@ -1393,6 +1400,28 @@ E :
     }
 
     | 
+
+    E MOD E
+    {
+        $$.code = $1.code;
+        $$.code.insert($$.code.end(), $3.code.begin(), $3.code.end());
+
+        if($1.tipo != tablaTipos.getId("int") ||
+        $3.tipo != tablaTipos.getId("int")){
+            cerr << "El operador módulo requiere enteros" << endl;
+            errorSem = true;
+            $$.tipo = tablaTipos.getId("int");
+            $$.dir  = $1.dir;
+        }
+        else{
+            string t = nuevaTemp();
+            $$.tipo = tablaTipos.getId("int");
+            $$.code.push_back(t + " = " + $1.dir + " % " + $3.dir);
+            $$.dir = t;
+        }
+    }
+
+    |
     
     E LT E
 

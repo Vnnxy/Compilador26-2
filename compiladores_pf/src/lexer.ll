@@ -117,7 +117,7 @@ WSPC        [ \t\r]+
 
 {WSPC}         { /* Ignorar espacios */ }
 
-"\n"           { line++; }
+"\n"           { yylineno++; }
 
 "//"[^\n]*        { }
 
