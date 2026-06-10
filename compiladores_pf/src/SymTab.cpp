@@ -1,4 +1,5 @@
 #include "headers/SymTab.hpp"
+#include <algorithm>
 
 SymTab::SymTab() {}
 
@@ -99,7 +100,16 @@ void SymTab::print() {
 
     cout << "------\t\t---\t----\t---" << endl;
 
-    for (auto& par : syms) {
+    vector<pair<string, Sym>> entries(syms.begin(), syms.end());
+
+    sort(entries.begin(), entries.end(),
+        [](const pair<string,Sym>& a, const pair<string,Sym>& b){
+            if(a.second.dir == -1) return false;
+            if(b.second.dir == -1) return true;
+            return a.second.dir < b.second.dir;
+        });
+
+    for (auto& par : entries) {
 
         cout << par.first << "\t\t"
              << par.second.dir << "\t"

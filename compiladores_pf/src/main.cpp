@@ -8,6 +8,7 @@
 #include "headers/ErrorSem.hpp"
 
 bool errorSem = false;
+bool errorLexico = false;
 
 int main(int argc, char *argv[]) {
 
@@ -75,7 +76,7 @@ int main(int argc, char *argv[]) {
         << "-------------------------------------------"
         << std::endl;
 
-    if (result == 0 && !errorSem) {
+    if (result == 0 && !errorSem && !errorLexico) {
 
         std::cout
             << "Analisis completado exitosamente."

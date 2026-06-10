@@ -6,6 +6,7 @@
     #include "headers/Lexer.hpp"
 
     #define YY_DECL int C1::Lexer::lex(C1::Parser::semantic_type *yylval)
+    extern bool errorLexico;
 %}
 
 %option c++
@@ -140,6 +141,9 @@ WSPC        [ \t\r]+
                         << "' en línea "
                         << line
                         << std::endl;
+                errorLexico = true;
+
                }
 
+                
 %%
