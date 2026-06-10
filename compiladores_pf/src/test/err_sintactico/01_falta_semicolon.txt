@@ -1,0 +1,11 @@
+// ERROR SINTACTICO: falta ';' al final de la declaracion de 'x'
+// El parser espera ';' despues del identificador pero encuentra 'int'
+
+int x
+int y;
+
+def int main(){
+    x = 1;
+    y = 2;
+    return 0;
+}

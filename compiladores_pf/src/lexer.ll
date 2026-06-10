@@ -35,6 +35,7 @@ WSPC        [ \t\r]+
 "char"         { return Parser::token::CHAR; }
 
 "struct"       { return Parser::token::STRUCT; }
+"def"          { return( Parser::token::DEF );    }
 
 "if"           { return Parser::token::IF; }
 "else"         { return Parser::token::ELSE; }
@@ -67,6 +68,8 @@ WSPC        [ \t\r]+
 
 "*"            { return Parser::token::MULT; }
 "/"            { return Parser::token::DIV; }
+"%"            { return Parser::token::MOD; }
+
 
 "="            { return Parser::token::ASSIGN; }
 
@@ -114,7 +117,7 @@ WSPC        [ \t\r]+
 
 {WSPC}         { /* Ignorar espacios */ }
 
-"\n"           { line++; }
+"\n"           { yylineno++; }
 
 "//"[^\n]*        { }
 

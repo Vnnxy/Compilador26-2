@@ -1,0 +1,31 @@
+// Busqueda lineal en arreglo con salida anticipada (break)
+// Cubre: arreglos, break, if dentro de while, retorno de indice
+
+int[8] datos;
+int objetivo;
+int posicion;
+int i;
+
+def int main(){
+    datos[0] = 4;
+    datos[1] = 15;
+    datos[2] = 7;
+    datos[3] = 23;
+    datos[4] = 1;
+    datos[5] = 9;
+    datos[6] = 42;
+    datos[7] = 3;
+
+    objetivo = 23;
+    posicion = 0 - 1;
+
+    i = 0;
+    while(i < 8){
+        if(datos[i] == objetivo){
+            posicion = i;
+            break;
+        }
+        i = i + 1;
+    }
+    return posicion;
+}

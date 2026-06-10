@@ -1,0 +1,13 @@
+// ERROR SEMANTICO: suma entre int y bool
+// El compilador debe reportar: "Tipos incompatibles" en la expresion x + bandera
+
+int x;
+bool bandera;
+int resultado;
+
+def int main(){
+    x = 42;
+    bandera = true;
+    resultado = x + bandera;
+    return 0;
+}

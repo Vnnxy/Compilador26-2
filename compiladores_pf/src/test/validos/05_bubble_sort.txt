@@ -1,0 +1,27 @@
+// Ordenamiento burbuja sobre arreglo global
+// Cubre: for anidados, swap con variable temporal, arreglos
+
+int[6] arr;
+int i;
+int j;
+int tmp;
+
+def int main(){
+    arr[0] = 64;
+    arr[1] = 34;
+    arr[2] = 25;
+    arr[3] = 12;
+    arr[4] = 22;
+    arr[5] = 11;
+
+    for(i = 0; i < 5; i = i + 1){
+        for(j = 0; j < 5 - i; j = j + 1){
+            if(arr[j] > arr[j + 1]){
+                tmp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = tmp;
+            }
+        }
+    }
+    return 0;
+}
