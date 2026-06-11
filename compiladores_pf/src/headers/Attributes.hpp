@@ -8,11 +8,13 @@ using namespace std;
 
 // ============================================================
 // Atributos semánticos generales
+// Cada símbolo no-terminal en el parser tiene un Attr asociado
+// que acumula información semántica durante el análisis.
 // ============================================================
 
 struct Attr {
 
-    // Tipo del atributo
+    // Tipo del atributo (int,float,etc)
     int tipo;
 
     // Tipo base (arrays)
@@ -26,11 +28,9 @@ struct Attr {
 
     // Labels para control de flujo
     string trueLabel;
-
     string falseLabel;
-
     string nextLabel;
-
+    // Utilizado para atributos, x.n
     string ldir;
 
     // Lista de tipos (args/params)
@@ -39,6 +39,7 @@ struct Attr {
     // Temporales de argumentos
     vector<string> listaDir;
 
+    // TAC
     vector<string> code;
 
     Attr()

@@ -7,13 +7,14 @@
 #include "headers/TAC.hpp"
 #include "headers/ErrorSem.hpp"
 
+// Bandera para errores semánticos
 bool errorSem = false;
+// Bandera para errores léxicos
 bool errorLexico = false;
 
 int main(int argc, char *argv[]) {
 
     if (argc < 2) {
-
         std::cerr
             << "Uso: ./comp <archivo_fuente>"
             << std::endl;
@@ -76,6 +77,7 @@ int main(int argc, char *argv[]) {
         << "-------------------------------------------"
         << std::endl;
 
+    // Status final. 
     if (result == 0 && !errorSem && !errorLexico) {
 
         std::cout

@@ -88,6 +88,7 @@ clean:
 	$(OBJS) \
 	Parser.cpp \
 	Parser.hpp \
-	Lexer.cpp
+	Lexer.cpp \
+	headers/Parser.hpp
 
 .PHONY: all clean

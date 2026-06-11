@@ -510,7 +510,8 @@ namespace C1 {
     LPAREN = 298,                  // LPAREN
     RPAREN = 299,                  // RPAREN
     REGISTER = 300,                // REGISTER
-    LOWER_THAN_ELSE = 301          // LOWER_THAN_ELSE
+    LOWER_THAN_ELSE = 301,         // LOWER_THAN_ELSE
+    LOWER_THAN_LPAREN = 302        // LOWER_THAN_LPAREN
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -527,7 +528,7 @@ namespace C1 {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 47, ///< Number of tokens.
+        YYNTOKENS = 48, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -576,30 +577,31 @@ namespace C1 {
         S_RPAREN = 44,                           // RPAREN
         S_REGISTER = 45,                         // REGISTER
         S_LOWER_THAN_ELSE = 46,                  // LOWER_THAN_ELSE
-        S_YYACCEPT = 47,                         // $accept
-        S_P = 48,                                // P
-        S_49_1 = 49,                             // $@1
-        S_STRUCT_VARS = 50,                      // STRUCT_VARS
-        S_D = 51,                                // D
-        S_52_2 = 52,                             // $@2
-        S_53_3 = 53,                             // $@3
-        S_FUNC = 54,                             // FUNC
-        S_55_4 = 55,                             // $@4
-        S_T = 56,                                // T
-        S_57_5 = 57,                             // $@5
-        S_58_6 = 58,                             // $@6
-        S_B = 59,                                // B
-        S_A = 60,                                // A
-        S_L = 61,                                // L
-        S_F = 62,                                // F
-        S_BLOQUE = 63,                           // BLOQUE
-        S_LVALUE = 64,                           // LVALUE
-        S_S = 65,                                // S
-        S_BREAK_MARK = 66,                       // BREAK_MARK
-        S_STMT = 67,                             // STMT
-        S_RETURN_STMT = 68,                      // RETURN_STMT
-        S_E = 69,                                // E
-        S_ARGS = 70                              // ARGS
+        S_LOWER_THAN_LPAREN = 47,                // LOWER_THAN_LPAREN
+        S_YYACCEPT = 48,                         // $accept
+        S_P = 49,                                // P
+        S_50_1 = 50,                             // $@1
+        S_STRUCT_VARS = 51,                      // STRUCT_VARS
+        S_D = 52,                                // D
+        S_53_2 = 53,                             // $@2
+        S_54_3 = 54,                             // $@3
+        S_FUNC = 55,                             // FUNC
+        S_56_4 = 56,                             // $@4
+        S_T = 57,                                // T
+        S_58_5 = 58,                             // $@5
+        S_59_6 = 59,                             // $@6
+        S_B = 60,                                // B
+        S_A = 61,                                // A
+        S_L = 62,                                // L
+        S_F = 63,                                // F
+        S_BLOQUE = 64,                           // BLOQUE
+        S_LVALUE = 65,                           // LVALUE
+        S_S = 66,                                // S
+        S_BREAK_MARK = 67,                       // BREAK_MARK
+        S_STMT = 68,                             // STMT
+        S_RETURN_STMT = 69,                      // RETURN_STMT
+        S_E = 70,                                // E
+        S_ARGS = 71                              // ARGS
       };
     };
 
@@ -1694,6 +1696,21 @@ switch (yykind)
         return symbol_type (token::LOWER_THAN_ELSE);
       }
 #endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_LOWER_THAN_LPAREN ()
+      {
+        return symbol_type (token::LOWER_THAN_LPAREN);
+      }
+#else
+      static
+      symbol_type
+      make_LOWER_THAN_LPAREN ()
+      {
+        return symbol_type (token::LOWER_THAN_LPAREN);
+      }
+#endif
 
 
   private:
@@ -1998,7 +2015,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 349,     ///< Last index in yytable_.
+      yylast_ = 343,     ///< Last index in yytable_.
       yynnts_ = 24,  ///< Number of nonterminal symbols.
       yyfinal_ = 3 ///< Termination state number.
     };
@@ -2012,7 +2029,7 @@ switch (yykind)
 
 #line 13 "parser.yy"
 } // C1
-#line 2016 "headers/Parser.hpp"
+#line 2033 "headers/Parser.hpp"
 
 
 

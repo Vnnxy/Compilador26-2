@@ -43,7 +43,7 @@ struct Sym {
 class SymTab {
 
 private:
-
+    // nombre : entrada sym
     map<string, Sym> syms;
 
 public:

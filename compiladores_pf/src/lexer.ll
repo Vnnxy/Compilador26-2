@@ -4,7 +4,8 @@
 
     #include "Parser.hpp"
     #include "headers/Lexer.hpp"
-
+    
+    #undef YY_DECL
     #define YY_DECL int C1::Lexer::lex(C1::Parser::semantic_type *yylval)
     extern bool errorLexico;
 %}
@@ -14,7 +15,7 @@
 %option outfile="Lexer.cpp"
 %option yyclass="Lexer"
 
-%x COMMENT
+%x COMMENT 
 
 DIG         [0-9]
 LETTER      [a-zA-Z_]

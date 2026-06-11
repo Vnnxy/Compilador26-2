@@ -18,7 +18,7 @@ bool SymTab::addSym(string id, int dir, int tipo, string cat) {
 }
 
 // ============================================================
-// Versión para funciones
+// Versión para funciones (contiene parametros)
 // ============================================================
 bool SymTab::addSym(
     string id,
@@ -120,6 +120,7 @@ void SymTab::print() {
     cout << "========================================" << endl;
 }
 
+// Regresa la lista de parametros de una función.
 vector<int> SymTab::getParams(string id){
 
     if(existe(id)){

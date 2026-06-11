@@ -83,17 +83,20 @@
     // FUNCIONES AUXILIARES DE TIPOS
     // ========================================================
 
+    // Regresa si el tipo es int o float
     bool esNumerico(int tipo){
 
         return tipo == tablaTipos.getId("int") ||
             tipo == tablaTipos.getId("float");
     }
 
+    // Regresa si el tipo es un bool
     bool esBooleano(int tipo){
 
         return tipo == tablaTipos.getId("bool");
     }
 
+    // FUnción que revisa si dos tipos son compatibles al operar.
     bool tiposCompatibles(int t1, int t2){
 
         if(t1 == t2)
@@ -107,6 +110,7 @@
         return false;
     }
 
+    // Regresa el tipo dominante entre dos tipos. float > int
     int tipoDominante(int t1, int t2){
 
         if(t1 == tablaTipos.getId("float") ||
