@@ -54,22 +54,40 @@ int main(int argc, char *argv[]) {
 
     in.close();
 
-    // ========================================================
-    // Mostrar código intermedio generado
-    // ========================================================
-
     std::cout << std::endl;
 
-    std::cout
-        << "===== CODIGO INTERMEDIO ====="
-        << std::endl;
+    // ========================================================
+    // Guardar código intermedio en archivo
+    // ========================================================
 
-    for(const std::string& instr : codigo) {
+    std::string nombreSalida =
+        std::string(argv[1]) + ".tac";
+
+    std::ofstream out(nombreSalida);
+
+    if(!out.is_open()){
+
+        std::cerr
+            << "No se pudo crear el archivo de salida: "
+            << nombreSalida
+            << std::endl;
+    }
+    else{
+
+        for(const std::string& instr : codigo){
+
+            out
+                << instr
+                << std::endl;
+        }
+
+        out.close();
 
         std::cout
-        << instr
-        << std::endl;
-    }
+            << "Codigo intermedio guardado en: "
+            << nombreSalida
+            << std::endl;
+}
 
     std::cout << std::endl;
 
