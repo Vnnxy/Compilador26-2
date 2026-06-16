@@ -33,6 +33,7 @@ y.output
 **/Parser.cpp
 **/Parser.hpp
 **/Parser.hpp
+**/FlexLexer.h
 **/*.o
 **/comp
 **/lexer

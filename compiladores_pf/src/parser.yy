@@ -295,6 +295,7 @@ P :
 // DECLARACIONES
 // ============================================================
 
+// Variables de structs, se agrega un currentType al alcance actual.
 STRUCT_VARS :
     ID
     {
@@ -304,7 +305,8 @@ STRUCT_VARS :
         }
         free($1);
     }
-    | STRUCT_VARS COMMA ID
+    // Definición para multiples elementos separados por una coma.
+    | STRUCT_VARS COMMA ID 
     {
         if (currentType != -1) {
             pilaTs.top()->addSym($3, dir, currentType, "var");
@@ -318,16 +320,17 @@ STRUCT_VARS :
     }
 ;
 
+// Declaraciones
 D :
-
+    // Funcion Declaracion
     FUNC D
 
     |
-
+    // Tipo L ; D
     T L SEMICOLON D
 
     |
-
+    // Definicion de struct
     STRUCT ID
     {
         pilaTs.push(new SymTab());
