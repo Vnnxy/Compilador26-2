@@ -1,19 +1,19 @@
-# Compiler Project Base Repository
+# Repositorio Base del Proyecto Compilador
 
-Frontend compiler project in C++ using Flex and Bison. Compilador para un subconjunto de lenguaje C con análisis léxico, sintáctico, semántico y generación de código de tres direcciones (TAC).
+Proyecto de compilador frontend en C++ usando Flex y Bison. Compilador para un subconjunto de lenguaje C con análisis léxico, sintáctico, semántico y generación de código de tres direcciones (TAC).
 
-## Features
-- Lexical analysis (Flex)
-- Syntax analysis (Bison)
-- Semantic analysis
-- Type tables
-- Symbol tables
-- Three-address code generation (TAC)
-- Function declarations and calls
-- Array and struct support
-- Semantic error detection
+## Características
+- Análisis léxico (Flex)
+- Análisis sintáctico (Bison)
+- Análisis semántico
+- Tablas de tipos
+- Tablas de símbolos
+- Generación de código de tres direcciones (TAC)
+- Declaraciones y llamadas a funciones
+- Soporte de arreglos y structs
+- Detección de errores semánticos
 
-## Build
+## Construcción
 
 ```bash
 make
