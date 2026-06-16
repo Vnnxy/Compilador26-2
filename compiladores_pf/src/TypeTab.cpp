@@ -14,7 +14,7 @@ TypeTab::TypeTab() {
     // Tipo 3: char (1 byte)
     types[3] = Type("char", 1);
 
-    // El siguiente ID disponible es 2
+    // El siguiente ID disponible es 4
     nextId = 4;
 }
 
@@ -95,11 +95,13 @@ string TypeTab::getName(int id) {
     return "desconocido";
 }
 
+// Obtiene el tipo base dado su id.
 int TypeTab::getTipoBase(int id){
 
     return types[id].tipoBase;
 }
 
+// Obtiene la tabla de símbolos interna de un struct.
 SymTab* TypeTab::getTS(int id){
 
     if(types.find(id) == types.end()){

@@ -11,6 +11,7 @@ using namespace std;
 
 struct Type {
 
+    //nombre del tipo
     string name;
 
     int tam;
