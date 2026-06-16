@@ -73,18 +73,6 @@ Para ejecutar con este archivo:
 
 ## Estructura del Proyecto
 
-### `/compilador/` - Versión Anterior del Compilador
-Contiene una implementación anterior del compilador con su propia estructura:
-- **include/** - Headers de la versión anterior (Driver.hpp, Expresion.h, Quad.h, Symbol.h, Table.h, Type.h, etc.)
-- **src/** - Código fuente de la versión anterior con implementación usando clases como Driver, Expresion, FinalCode, Quad, Stack, Symbol, Table, Type
-- Nota: Esta carpeta se mantiene como histórico de desarrollo
-
-### `/docs/` - Documentación
-- **specification.md** - Especificación del lenguaje y características soportadas por el compilador
-
-### `/include/` - Headers Compartidos
-- **symbol_table.hpp** - Definiciones de tabla de símbolos
-
 ### `/src/` - Código Fuente Principal
 
 #### Archivos de Configuración de Herramientas
@@ -110,11 +98,8 @@ Contiene una implementación anterior del compilador con su propia estructura:
 - **FlexLexer.h** - Header base de Flex (biblioteca estándar)
 
 #### Otros Archivos
-- **prueba** - Archivo de prueba del compilador
 - **Makefile** - Configuración de construcción del proyecto
 
-### Makefile Principal
-Ubicado en la raíz del proyecto, configura la construcción de toda la solución
 
 ### Flujo de Compilación
 1. **Análisis Léxico (Lexer)**: Lee el archivo fuente y genera tokens usando reglas en lexer.ll
